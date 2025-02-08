@@ -273,7 +273,7 @@ function handle_channel_selection(x, y, z)
 
             local prev_x = ((midichannel - 1) % 4) + 1
             local prev_y = math.floor((midichannel - 1) / 4) + 1
-            grid_led(prev_x, prev_y, 1)
+            grid_led(prev_x, prev_y, 3)
 
             midichannel = new_channel
 
@@ -494,7 +494,7 @@ function initialize_grid()
         for x = 1, 4 do
             local channel = (y - 1) * 4 + x
             if channel <= 8 then
-                grid_led(x, y, channel == midichannel and 10 or 1)
+                grid_led(x, y, channel == midichannel and 10 or 3)
             end
         end
     end
