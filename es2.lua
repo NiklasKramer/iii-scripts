@@ -157,24 +157,102 @@ end
 function handle_transpose(x, z)
     if z == 1 then
         if x == 14 then
-            transpose = transpose - 1 -- Transpose down
+            transpose = transpose - 1
         elseif x == 15 then
-            transpose = transpose + 1 -- Transpose up
+            transpose = transpose + 1
         end
 
-        -- Default transpose value (reset LEDs)
         if transpose == 24 then
-            grid_led(14, 16, 5) -- Turn off transpose down LED
-            grid_led(15, 16, 5) -- Turn off transpose up LED
+            grid_led(14, 16, 5)
+            grid_led(15, 16, 5)
         else
-            -- Highlight only the direction we moved
-            grid_led(14, 16, transpose < 24 and 15 or 5) -- Bright if transpose is below default
-            grid_led(15, 16, transpose > 24 and 15 or 5) -- Bright if transpose is above default
+            grid_led(14, 16, transpose < 24 and 15 or 5)
+            grid_led(15, 16, transpose > 24 and 15 or 5)
         end
 
         grid_refresh()
         print("Transpose set to:", transpose)
     end
+end
+
+--
+--
+-- // CHANNEL EDIT MODE \\
+function display_velocity_for_channel()
+    -- Clear row 3 before updating
+    for i = 1, 16 do
+        grid_led(i, 3, 0) -- Turn off all LEDs in row 3
+    end
+
+    -- Get the current velocity and highlight the corresponding pad
+    local velocity_x = math.ceil(channels[midichannel].velocity / 127 * 16)
+    for i = 1, velocity_x do
+        grid_led(i, 3, 1) -- Dim all pads
+    end
+
+    grid_led(velocity_x, 3, 10) -- Highlight current velocity
+    grid_refresh()
+end
+
+function display_velocity_range_for_channel()
+    -- Clear row 4 before updating
+    for i = 1, 16 do
+        grid_led(i, 4, 0) -- Turn off all LEDs in row 4
+    end
+
+    -- Get the current velocity range and highlight the corresponding pad
+    local range_x = math.ceil(channels[midichannel].velocity_range / 127 * 16)
+    for i = 1, range_x do
+        grid_led(i, 4, 1) -- Dim all pads up to the current range
+    end
+
+    grid_led(range_x, 4, 10) -- Highlight current velocity range
+    grid_refresh()
+end
+
+function handle_velocity_range_selection(x, y, z)
+    if z == 1 and y == 4 then
+        -- Calculate new velocity range based on x position
+        local new_range = math.floor((x / 16) * 127)
+        channels[midichannel].velocity_range = new_range
+
+        -- Update velocity range display
+        display_velocity_range_for_channel()
+
+        print("Channel " .. midichannel .. " velocity range set to " .. new_range)
+    end
+end
+
+function handle_velocity_selection(x, y, z)
+    if z == 1 and y == 3 then
+        -- Calculate new velocity based on x position
+        local new_velocity = math.floor((x / 16) * 127)
+        channels[midichannel].velocity = new_velocity
+
+        -- Update velocity display
+        display_velocity_for_channel()
+
+        print("Channel " .. midichannel .. " velocity set to " .. new_velocity)
+    end
+end
+
+function handle_channel_edit_mode(x, y, z)
+    if channel_edit_mode then
+        display_channel_edit_mode() -- ✅ Refresh both velocity and range
+    end
+
+    if y == 3 then
+        -- Handle velocity selection (row 3)
+        handle_velocity_selection(x, y, z)
+    elseif y == 4 then
+        -- Handle velocity range selection (row 4)
+        handle_velocity_range_selection(x, y, z)
+    end
+end
+
+function display_channel_edit_mode()
+    display_velocity_for_channel()
+    display_velocity_range_for_channel() -- ✅ Now also shows random velocity range
 end
 
 --
@@ -192,6 +270,7 @@ function handle_channel_selection(x, y, z)
 
             if shift == 1 then
                 channel_edit_mode = true
+                display_channel_edit_mode()
             else
                 channel_edit_mode = false
             end
@@ -214,35 +293,6 @@ function handle_channel_selection(x, y, z)
 
             print("MIDI Channel set to:", midichannel)
         end
-    end
-end
-
-function display_velocity_for_channel()
-    -- Clear row 3 before updating
-    for i = 1, 16 do
-        grid_led(i, 3, 0) -- Turn off all LEDs in row 3
-    end
-
-    -- Get the current velocity and highlight the corresponding pad
-    local velocity_x = math.ceil(channels[midichannel].velocity / 127 * 16)
-    grid_led(velocity_x, 3, 15) -- Highlight current velocity
-    grid_refresh()
-end
-
-function handle_channel_edit_mode(x, y, z)
-    if channel_edit_mode then
-        display_velocity_for_channel() -- Always refresh velocity display
-    end
-
-    if z == 1 and y == 3 then
-        -- Calculate new velocity based on x position
-        local new_velocity = math.floor((x / 16) * 127)
-        channels[midichannel].velocity = new_velocity
-
-        -- Update velocity display
-        display_velocity_for_channel()
-
-        print("Channel " .. midichannel .. " velocity set to " .. new_velocity)
     end
 end
 
