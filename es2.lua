@@ -30,14 +30,14 @@ recorders = {
 }
 
 channels = {
-    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0, playback_speed = 1 },
-    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0, playback_speed = 1 },
-    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0, playback_speed = 1 },
-    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0, playback_speed = 1 },
-    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0, playback_speed = 1 },
-    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0, playback_speed = 1 },
-    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0, playback_speed = 1 },
-    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0, playback_speed = 1 }
+    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0 },
+    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0 },
+    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0 },
+    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0 },
+    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0 },
+    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0 },
+    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0 },
+    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0 }
 }
 
 --
@@ -232,6 +232,133 @@ function handle_velocity_selection(x, y, z)
     end
 end
 
+-- Make sure held_notes exists
+held_notes = {}
+
+function handle_sustain_selection(x, y, z)
+    if z == 1 and y == 5 then
+        local channel = channels[midichannel]
+
+        -- Toggle sustain ON/OFF
+        channel.sustain = (channel.sustain == 0) and 1 or 0
+
+        -- ✅ Send MIDI CC64 for sustain pedal
+        local sustain_value = (channel.sustain == 1) and 127 or 0
+        midi_tx(0, 0xB0 + midichannel - 1, 64, sustain_value) -- CC64 Hold Pedal
+
+        -- ✅ If sustain is OFF, release all held notes
+        if channel.sustain == 0 then
+            for note, _ in pairs(held_notes) do
+                midi_tx(0, 0x80 + midichannel - 1, note, 0) -- Send Note Off
+                held_notes[note] = nil                      -- Clear from held notes
+            end
+        end
+
+        -- Update sustain LED display
+        display_sustain_for_channel()
+
+        print("Channel " ..
+            midichannel .. " sustain set to " .. channel.sustain .. " (MIDI CC64 = " .. sustain_value .. ")")
+    end
+end
+
+function display_sustain_for_channel()
+    for i = 1, 16 do
+        grid_led(i, 5, 0) -- Clear row first
+    end
+
+    -- Use different LED brightness for a pattern
+    for i = 1, 16, 3 do
+        local brightness = (channels[midichannel].sustain == 1) and 15 or 3
+        grid_led(i, 5, brightness) -- Bright LEDs for sustain ON
+    end
+
+    grid_refresh()
+end
+
+function handle_octave_selection(x, y, z)
+    if z == 1 and y == 6 then
+        if x == 8 or x == 9 then
+            channels[midichannel].octave = 0                   -- Reset to octave 0
+        elseif x < 8 then
+            channels[midichannel].octave = math.max(-4, x - 8) -- Left side lowers octave
+        elseif x > 9 then
+            channels[midichannel].octave = math.min(4, x - 9)  -- Right side increases octave
+        end
+
+        display_octave_for_channel()
+        print("Channel " .. midichannel .. " octave set to " .. channels[midichannel].octave)
+    end
+end
+
+function display_octave_for_channel()
+    for i = 1, 16 do
+        grid_led(i, 6, 0) -- Clear row
+    end
+
+    -- Pre-light the full octave range (-4 to +4)
+    for i = 4, 13 do
+        grid_led(i, 6, 3)
+    end
+
+    local octave = channels[midichannel].octave
+    local center_x = 8 -- Middle keys (8 & 9) represent octave 0
+
+    -- Highlight selected octave
+    if octave == 0 then
+        grid_led(8, 6, 15)
+        grid_led(9, 6, 15)
+    elseif octave < 0 then
+        grid_led(center_x + octave, 6, 10)     -- Left side (down)
+    else
+        grid_led(center_x + octave + 1, 6, 10) -- Right side (up)
+    end
+
+    grid_refresh()
+end
+
+function handle_channel_transpose_selection(x, y, z)
+    if z == 1 and y == 7 then
+        if x == 8 or x == 9 then
+            channels[midichannel].transpose = 0        -- Reset to transpose 0
+        elseif x < 8 then
+            channels[midichannel].transpose = -(8 - x) -- Left side lowers transpose
+        elseif x > 9 then
+            channels[midichannel].transpose = x - 9    -- Right side increases transpose
+        end
+
+        display_channel_transpose_for_channel()
+        print("Channel " .. midichannel .. " transpose set to " .. channels[midichannel].transpose)
+    end
+end
+
+function display_channel_transpose_for_channel()
+    for i = 1, 16 do
+        grid_led(i, 7, 0) -- Clear row
+    end
+
+    -- Pre-light the full transpose range (-7 to +7)
+    for i = 1, 16 do
+        grid_led(i, 7, 3)
+    end
+
+    local transpose = channels[midichannel].transpose
+    local center_x = 8 -- Middle keys (8 & 9) represent transpose 0
+
+    -- Highlight selected transpose
+    if transpose == 0 then
+        grid_led(8, 7, 15)
+        grid_led(9, 7, 15)
+    elseif transpose < 0 then
+        grid_led(center_x + transpose, 7, 10)     -- Left side (down)
+    else
+        grid_led(center_x + transpose + 1, 7, 10) -- Right side (up)
+    end
+
+    grid_refresh()
+end
+
+-- Modify handle_channel_edit_mode to include sustain selection
 function handle_channel_edit_mode(x, y, z)
     if channel_edit_mode then
         display_channel_edit_mode()
@@ -241,12 +368,21 @@ function handle_channel_edit_mode(x, y, z)
         handle_velocity_selection(x, y, z)
     elseif y == 4 then
         handle_velocity_range_selection(x, y, z)
+    elseif y == 5 then
+        handle_sustain_selection(x, y, z)
+    elseif y == 6 then
+        handle_octave_selection(x, y, z)
+    elseif y == 7 then
+        handle_channel_transpose_selection(x, y, z)
     end
 end
 
 function display_channel_edit_mode()
     display_velocity_for_channel()
     display_velocity_range_for_channel()
+    display_sustain_for_channel()
+    display_octave_for_channel()
+    display_channel_transpose_for_channel()
 end
 
 --
@@ -261,12 +397,7 @@ function handle_channel_selection(x, y, z)
                 end
             end
 
-            if shift == 1 then
-                channel_edit_mode = true
-                display_channel_edit_mode()
-            else
-                channel_edit_mode = false
-            end
+
 
             local new_channel = (y - 1) * 4 + x
             if new_channel > 8 then return end
@@ -276,6 +407,13 @@ function handle_channel_selection(x, y, z)
             grid_led(prev_x, prev_y, 3)
 
             midichannel = new_channel
+
+            if shift == 1 then
+                channel_edit_mode = true
+                display_channel_edit_mode()
+            else
+                channel_edit_mode = false
+            end
 
             grid_led(x, y, 10)
             grid_refresh()
@@ -303,9 +441,9 @@ function handle_note_generation(x, y, z, playback_channel)
         end
     end
 
-    -- Apply per-channel transpose, octave shift, and global transpose
-    local quantized_note = octave_offset + closest_note_in_scale + transpose
-    quantized_note = quantized_note + (channel_settings.octave * 12) + channel_settings.transpose
+    -- ✅ Apply per-channel transpose & octave (independent of global transpose)
+    local quantized_note = octave_offset + closest_note_in_scale
+    quantized_note = quantized_note + (channel_settings.octave * 12) + channel_settings.transpose + transpose
 
     -- Compute velocity with randomness
     local base_velocity = channel_settings.velocity
@@ -318,29 +456,23 @@ function handle_note_generation(x, y, z, playback_channel)
         -- ✅ Send MIDI Note On
         midi_tx(0, 0x90 + target_channel - 1, quantized_note, final_velocity)
 
+        -- ✅ Track note if sustain is ON
+        if channel_settings.sustain == 1 then
+            held_notes[quantized_note] = true
+        end
+
         -- ✅ Prevent LEDs from changing in edit mode
         if not channel_edit_mode then
             grid_led(x, y, 15) -- Bright LED when playing
         end
-
-        -- ✅ Apply sustain by scheduling a Note Off
-        if channel_settings.sustain > 0 then
-            clock.run(function()
-                clock.sleep(channel_settings.sustain / 1000) -- Convert ms to seconds
-
-                -- ✅ Send MIDI Note Off
-                midi_tx(0, 0x80 + target_channel - 1, quantized_note, 0)
-
-                -- ✅ Prevent LEDs from being turned off in edit mode
-                if not channel_edit_mode then
-                    grid_led(x, y, 0) -- Turn off LED
-                    grid_refresh()
-                end
-            end)
-        end
     else
-        -- ✅ Send MIDI Note Off
-        midi_tx(0, 0x80 + target_channel - 1, quantized_note, 0)
+        -- ✅ Only send Note Off if sustain is OFF
+        if channel_settings.sustain == 0 then
+            midi_tx(0, 0x80 + target_channel - 1, quantized_note, 0)
+        end
+
+        -- ✅ Remove note from held notes if sustain is OFF
+        held_notes[quantized_note] = nil
 
         -- ✅ Prevent LEDs from being turned off in edit mode
         if not channel_edit_mode then
