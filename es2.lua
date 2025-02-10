@@ -17,6 +17,7 @@ scales = {
     { 0, 2, 4, 5, 7, 9 },
     { 0, 2, 4, 5, 7, 9, 11 }
 }
+held_notes = {}
 
 recorders = {
     { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0 },
@@ -45,6 +46,10 @@ channels = {
 -- // PATTER RECORDER \\
 
 function start_recording(index)
+    if channel_edit_mode then
+        print("Cannot start recording while in edit mode")
+        return
+    end
     local recorder = recorders[index]
     recorder.recording = {}
     recorder.recording_active = true
@@ -64,9 +69,9 @@ function stop_recording(index)
     flash_state = false
     metro_set(4, 0)
 
-    local x, y = (index - 1) % 4 + 9, math.floor((index - 1) / 4) + 1
-    grid_led(x, y, 10)
-    grid_refresh()
+    -- ✅ Properly update LED when recording stops
+    refresh_recorder_leds()
+
     print("Recorder " .. index .. " stopped recording")
 end
 
@@ -95,16 +100,15 @@ function stop_playback(index)
     recorder.playback_active = false
 
     -- ✅ Block LED clearing if in edit mode
-    if not channel_edit_mode then
-        for _, event in ipairs(recorder.recording) do
-            grid_led(event.x, event.y, 0) -- Turns off playback lights only if not in edit mode
-        end
-
-        -- ✅ Prevent recorder LED from coming back in edit mode
-        local x, y = (index - 1) % 4 + 9, math.floor((index - 1) / 4) + 1
-        grid_led(x, y, 5)
-        grid_refresh()
+    for _, event in ipairs(recorder.recording) do
+        grid_led(event.x, event.y, 0)     -- Turns off playback lights only if not in edit mode
     end
+
+    -- ✅ Prevent recorder LED from coming back in edit mode
+    local x, y = (index - 1) % 4 + 9, math.floor((index - 1) / 4) + 1
+    grid_led(x, y, 5)
+    grid_refresh()
+
 
     print("Recorder " .. index .. " stopped playback")
 end
@@ -182,37 +186,34 @@ end
 --
 --
 -- // CHANNEL EDIT MODE \\
-function display_velocity_for_channel()
-    for i = 1, 16 do
-        grid_led(i, 3, 0)
+
+-- HANDLERS
+function handle_channel_edit_mode(x, y, z)
+    if channel_edit_mode then
+        display_channel_edit_mode()
     end
 
-    local velocity_x = math.ceil(channels[midichannel].velocity / 127 * 16)
-    for i = 1, velocity_x do
-        grid_led(i, 3, 1)
+    if y == 3 then
+        handle_velocity_selection(x, y, z)
+    elseif y == 4 then
+        handle_velocity_range_selection(x, y, z)
+    elseif y == 5 then
+        handle_sustain_selection(x, y, z)
+    elseif y == 6 then
+        handle_octave_selection(x, y, z)
+    elseif y == 7 then
+        handle_channel_transpose_selection(x, y, z)
     end
-
-    grid_led(velocity_x, 3, 10)
-    grid_refresh()
 end
 
-function display_velocity_range_for_channel()
-    for i = 1, 16 do
-        grid_led(i, 4, 0)
-    end
-
-    local range_x = math.ceil(channels[midichannel].velocity_range / 127 * 16)
-    for i = 1, range_x do
-        grid_led(i, 4, 1)
-    end
-
-    grid_led(range_x, 4, 10)
-    grid_refresh()
-end
+------------------------------------------------------------------------------------------------------------------------
 
 function handle_velocity_range_selection(x, y, z)
     if z == 1 and y == 4 then
         local new_range = math.floor((x / 16) * 127)
+        if shift == 1 then
+            new_range = 0
+        end
         channels[midichannel].velocity_range = new_range
 
         display_velocity_range_for_channel()
@@ -224,6 +225,9 @@ end
 function handle_velocity_selection(x, y, z)
     if z == 1 and y == 3 then
         local new_velocity = math.floor((x / 16) * 127)
+        if shift == 1 then
+            new_velocity = 0
+        end
         channels[midichannel].velocity = new_velocity
 
         display_velocity_for_channel()
@@ -232,52 +236,43 @@ function handle_velocity_selection(x, y, z)
     end
 end
 
--- Make sure held_notes exists
-held_notes = {}
-
 function handle_sustain_selection(x, y, z)
     if z == 1 and y == 5 then
         local channel = channels[midichannel]
 
         -- Toggle sustain ON/OFF
+        local previous_sustain = channel.sustain
         channel.sustain = (channel.sustain == 0) and 1 or 0
 
-        -- ✅ Send MIDI CC64 for sustain pedal
+        -- Send MIDI CC64 for sustain pedal
         local sustain_value = (channel.sustain == 1) and 127 or 0
-        midi_tx(0, 0xB0 + midichannel - 1, 64, sustain_value) -- CC64 Hold Pedal
+        midi_tx(0, 0xB0 + midichannel - 1, 64, sustain_value)
 
-        -- ✅ If sustain is OFF, release all held notes
-        if channel.sustain == 0 then
+        -- If sustain is OFF, ensure all held notes are released
+        if previous_sustain == 1 and channel.sustain == 0 then
             for note, _ in pairs(held_notes) do
                 midi_tx(0, 0x80 + midichannel - 1, note, 0) -- Send Note Off
-                held_notes[note] = nil                      -- Clear from held notes
+                held_notes[note] = nil
             end
         end
 
-        -- Update sustain LED display
         display_sustain_for_channel()
-
         print("Channel " ..
             midichannel .. " sustain set to " .. channel.sustain .. " (MIDI CC64 = " .. sustain_value .. ")")
     end
 end
 
-function display_sustain_for_channel()
-    for i = 1, 16 do
-        grid_led(i, 5, 0) -- Clear row first
-    end
-
-    -- Use different LED brightness for a pattern
-    for i = 1, 16, 3 do
-        local brightness = (channels[midichannel].sustain == 1) and 15 or 3
-        grid_led(i, 5, brightness) -- Bright LEDs for sustain ON
-    end
-
-    grid_refresh()
-end
-
 function handle_octave_selection(x, y, z)
     if z == 1 and y == 6 then
+        -- Turn off all currently held notes before changing octave
+        for note, _ in pairs(held_notes) do
+            send_note_off(midichannel, note)
+        end
+
+        -- Clear stored notes
+        held_notes = {}
+
+        -- Handle octave change logic
         if x == 8 or x == 9 then
             channels[midichannel].octave = 0                   -- Reset to octave 0
         elseif x < 8 then
@@ -291,6 +286,24 @@ function handle_octave_selection(x, y, z)
     end
 end
 
+function handle_channel_transpose_selection(x, y, z)
+    if z == 1 and y == 7 then
+        if x == 8 or x == 9 then
+            channels[midichannel].transpose = 0
+        elseif x < 8 then
+            channels[midichannel].transpose = -(8 - x)
+        elseif x > 9 then
+            channels[midichannel].transpose = x - 9
+        end
+
+        display_channel_transpose_for_channel()
+        print("Channel " .. midichannel .. " transpose set to " .. channels[midichannel].transpose)
+    end
+end
+
+------------------------------------------------------------------------------------------------------------------------
+
+-- DISPLAY
 function display_octave_for_channel()
     for i = 1, 16 do
         grid_led(i, 6, 0) -- Clear row
@@ -317,19 +330,33 @@ function display_octave_for_channel()
     grid_refresh()
 end
 
-function handle_channel_transpose_selection(x, y, z)
-    if z == 1 and y == 7 then
-        if x == 8 or x == 9 then
-            channels[midichannel].transpose = 0        -- Reset to transpose 0
-        elseif x < 8 then
-            channels[midichannel].transpose = -(8 - x) -- Left side lowers transpose
-        elseif x > 9 then
-            channels[midichannel].transpose = x - 9    -- Right side increases transpose
-        end
-
-        display_channel_transpose_for_channel()
-        print("Channel " .. midichannel .. " transpose set to " .. channels[midichannel].transpose)
+function display_velocity_for_channel()
+    for i = 1, 16 do
+        grid_led(i, 3, 0)
     end
+
+    local velocity_x = math.ceil(channels[midichannel].velocity / 127 * 16)
+
+    for i = 1, velocity_x do
+        grid_led(i, 3, 1)
+    end
+
+    grid_led(velocity_x, 3, 10)
+    grid_refresh()
+end
+
+function display_velocity_range_for_channel()
+    for i = 1, 16 do
+        grid_led(i, 4, 0)
+    end
+
+    local range_x = math.ceil(channels[midichannel].velocity_range / 127 * 16)
+    for i = 1, range_x do
+        grid_led(i, 4, 1)
+    end
+
+    grid_led(range_x, 4, 10)
+    grid_refresh()
 end
 
 function display_channel_transpose_for_channel()
@@ -358,23 +385,18 @@ function display_channel_transpose_for_channel()
     grid_refresh()
 end
 
--- Modify handle_channel_edit_mode to include sustain selection
-function handle_channel_edit_mode(x, y, z)
-    if channel_edit_mode then
-        display_channel_edit_mode()
+function display_sustain_for_channel()
+    for i = 1, 16 do
+        grid_led(i, 5, 0) -- Clear row first
     end
 
-    if y == 3 then
-        handle_velocity_selection(x, y, z)
-    elseif y == 4 then
-        handle_velocity_range_selection(x, y, z)
-    elseif y == 5 then
-        handle_sustain_selection(x, y, z)
-    elseif y == 6 then
-        handle_octave_selection(x, y, z)
-    elseif y == 7 then
-        handle_channel_transpose_selection(x, y, z)
+    -- Use different LED brightness for a pattern
+    for i = 1, 16, 3 do
+        local brightness = (channels[midichannel].sustain == 1) and 15 or 3
+        grid_led(i, 5, brightness) -- Bright LEDs for sustain ON
     end
+
+    grid_refresh()
 end
 
 function display_channel_edit_mode()
@@ -391,14 +413,6 @@ end
 function handle_channel_selection(x, y, z)
     if z == 1 then
         if x >= 1 and x <= 4 and (y == 1 or y == 2) then
-            for i = 3, 15 do
-                for j = 1, 16 do
-                    grid_led(j, i, 0)
-                end
-            end
-
-
-
             local new_channel = (y - 1) * 4 + x
             if new_channel > 8 then return end
 
@@ -406,16 +420,23 @@ function handle_channel_selection(x, y, z)
             local prev_y = math.floor((midichannel - 1) / 4) + 1
             grid_led(prev_x, prev_y, 3)
 
+            -- ✅ Set new channel
             midichannel = new_channel
 
+            -- ✅ Highlight selected channel properly
+            grid_led(x, y, 10)
+
+            -- ✅ If Shift is held, enter Edit Mode, but keep same highlighting
             if shift == 1 then
                 channel_edit_mode = true
                 display_channel_edit_mode()
             else
                 channel_edit_mode = false
+                refresh_recorder_leds()
             end
 
-            grid_led(x, y, 10)
+            -- ✅ Ensure Edit Mode Toggle (Key 15 Row 1) updates correctly
+            grid_led(15, 1, channel_edit_mode and 15 or 5)
             grid_refresh()
 
             print("MIDI Channel set to:", midichannel)
@@ -427,13 +448,11 @@ function handle_note_generation(x, y, z, playback_channel)
     local target_channel = playback_channel or midichannel
     local channel_settings = channels[target_channel]
 
-    -- Get base note
     local raw_note = x + (7 - y) * 5 + 50
-
-    -- Apply scale quantization
     local scale = scales[selected_scale]
     local octave_offset = math.floor(raw_note / 12) * 12
     local closest_note_in_scale = scale[1]
+
     for _, note in ipairs(scale) do
         local scaled_note = octave_offset + note
         if math.abs(raw_note - scaled_note) < math.abs(raw_note - (octave_offset + closest_note_in_scale)) then
@@ -441,40 +460,33 @@ function handle_note_generation(x, y, z, playback_channel)
         end
     end
 
-    -- ✅ Apply per-channel transpose & octave (independent of global transpose)
     local quantized_note = octave_offset + closest_note_in_scale
     quantized_note = quantized_note + (channel_settings.octave * 12) + channel_settings.transpose + transpose
 
-    -- Compute velocity with randomness
     local base_velocity = channel_settings.velocity
     local velocity_range = channel_settings.velocity_range
     local random_offset = math.random(-velocity_range, velocity_range)
-    local final_velocity = math.max(0, math.min(127, base_velocity + random_offset)) -- Clamp between 0-127
+    local final_velocity = math.max(0, math.min(127, base_velocity + random_offset))
 
-    -- Handle sustain and note-on/note-off logic
     if z == 1 then
-        -- ✅ Send MIDI Note On
+        -- Send MIDI Note On
         midi_tx(0, 0x90 + target_channel - 1, quantized_note, final_velocity)
 
-        -- ✅ Track note if sustain is ON
+        -- Store note if sustain is on
         if channel_settings.sustain == 1 then
             held_notes[quantized_note] = true
         end
 
-        -- ✅ Prevent LEDs from changing in edit mode
         if not channel_edit_mode then
             grid_led(x, y, 15) -- Bright LED when playing
         end
     else
-        -- ✅ Only send Note Off if sustain is OFF
-        if channel_settings.sustain == 0 then
-            midi_tx(0, 0x80 + target_channel - 1, quantized_note, 0)
-        end
+        -- Always send Note Off, even if sustain is on
+        midi_tx(0, 0x80 + target_channel - 1, quantized_note, 0)
 
-        -- ✅ Remove note from held notes if sustain is OFF
+        -- Remove from held notes
         held_notes[quantized_note] = nil
 
-        -- ✅ Prevent LEDs from being turned off in edit mode
         if not channel_edit_mode then
             grid_led(x, y, 0)
         end
@@ -484,17 +496,43 @@ function handle_note_generation(x, y, z, playback_channel)
 end
 
 function handle_shift(x, y, z)
-    print("Shift button pressed")
-    shift = z -- Active while pressed
-    grid_led(16, 1, z * 15)
+    shift = z                               -- Active while pressed
+    grid_led(16, 1, shift == 1 and 15 or 1) -- Bright when active, dim otherwise
     grid_refresh()
+    print("Shift " .. (shift == 1 and "Activated" or "Deactivated"))
+end
+
+function handle_edit_mode_toggle(x, y, z)
+    if x == 15 and y == 1 and z == 1 then
+        channel_edit_mode = not channel_edit_mode -- Toggle mode
+
+        -- ✅ Update LED feedback for Edit Mode toggle
+        grid_led(15, 1, channel_edit_mode and 15 or 5)
+        grid_refresh()
+
+        if channel_edit_mode then
+            -- ✅ Show edit mode interface
+            display_channel_edit_mode()
+            print("Edit Mode Enabled")
+        else
+            -- ✅ Instead of full grid reset, refresh recorder LEDs properly
+            refresh_recorder_leds()
+            print("Play Mode Enabled")
+        end
+    end
 end
 
 grid = function(x, y, z)
-    -- 🎛 Handle Shift Button First (Row 1, Column 16)
+    -- 🎛 Handle Edit Mode Toggle (Row 1, Key 15)
+    if x == 15 and y == 1 then
+        handle_edit_mode_toggle(x, y, z)
+        return
+    end
+
+    -- 🎛 Handle Shift Button (Row 1, Column 16)
     if x == 16 and y == 1 then
         handle_shift(x, y, z)
-        return -- Stop further processing
+        return
     end
 
     -- 🎬 Handle Pattern Recorder Buttons (Row 1 & 2, Keys 8-11)
@@ -551,32 +589,35 @@ function metro(index, stage)
                 local event = recorder.recording[recorder.playback_index]
 
                 if global_time >= event.time + recorder.record_start_time then
-                    -- ✅ Generate the note, but do NOT overwrite LEDs in edit mode
+                    -- Turn off the previous note before playing the next
+                    if recorder.playback_index > 1 then
+                        local prev_event = recorder.recording[recorder.playback_index - 1]
+                        midi_tx(0, 0x80 + prev_event.channel - 1, prev_event.x + prev_event.y * 5 + 50, 0)
+                    end
+
+                    -- Play the next note
                     handle_note_generation(event.x, event.y, event.z, event.channel)
 
-                    -- ✅ Fully block LED updates while in edit mode
+                    -- Prevent LED updates in edit mode
                     if not channel_edit_mode then
                         if event.channel == midichannel then
                             grid_led(event.x, event.y, event.z * 15) -- Full brightness for active channel
                         else
-                            grid_led(event.x, event.y, event.z * 1)  -- Super dim for other channels
+                            grid_led(event.x, event.y, event.z * 1)  -- Dim for other channels
                         end
                     end
 
-                    -- ✅ Move to the next recorded event
                     recorder.playback_index = recorder.playback_index + 1
 
-                    -- ✅ If the playback reaches the end, loop it back
                     if recorder.playback_index > #recorder.recording then
                         recorder.playback_index = 1
-                        recorder.record_start_time = global_time -- 🔄 Reset playback timing
+                        recorder.record_start_time = global_time
                         print("Recorder " .. rec_index .. " looped playback")
                     end
                 end
             end
         end
     elseif index == 3 then
-        -- ✅ Only clear this specific LED if we are NOT in edit mode
         if not channel_edit_mode then
             grid_led(16, 4, 0)
             grid_refresh()
@@ -608,13 +649,38 @@ function clear_channel_leds(channel)
     grid_refresh()
 end
 
+function send_note_off(channel, note)
+    if held_notes[note] then
+        midi_tx(0, 0x80 + channel - 1, note, 0) -- Send Note Off
+        held_notes[note] = nil                  -- Remove from held notes
+    end
+end
+
+function refresh_recorder_leds()
+    initialize_grid()
+
+    for index, recorder in ipairs(recorders) do
+        local x, y = (index - 1) % 4 + 9, math.floor((index - 1) / 4) + 1
+
+        if recorder.recording_active then
+            grid_led(x, y, 15)
+        elseif recorder.playback_active then
+            grid_led(x, y, 10)
+        else
+            grid_led(x, y, 1)
+        end
+    end
+
+    grid_refresh()
+end
+
 --
 --
 -- // INIT \\
 function initialize_grid()
     for x = 1, 16 do
         for y = 1, 16 do
-            grid_led(x, y, 0)
+            grid_led(x, y, 0) -- Clear everything
         end
     end
 
@@ -637,12 +703,16 @@ function initialize_grid()
     for y = 1, 2 do
         for x = 9, 12 do
             local index = (y - 1) * 4 + (x - 7)
-            local recorder = recorders[index]
-            grid_led(x, y, 1)
+            grid_led(x, y, 1) -- ✅ Set inactive recorders to same level as Shift + Press
         end
     end
 
-    grid_led(16, 1, shift * 15)
+    -- ✅ Pre-highlight Edit Mode Toggle (15 when active, 5 when inactive)
+    grid_led(15, 1, channel_edit_mode and 15 or 5)
+
+    -- ✅ Pre-highlight Shift Button (Dim 3, Bright 15 when pressed)
+    grid_led(16, 1, shift == 1 and 15 or 3)
+
     grid_refresh()
 end
 
