@@ -20,25 +20,46 @@ scales = {
 held_notes = {}
 
 recorders = {
-    { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0 },
-    { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0 },
-    { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0 },
-    { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0 },
-    { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0 },
-    { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0 },
-    { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0 },
-    { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0 }
+    { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0, playback_speed = 2 },
+    { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0, playback_speed = 1 },
+    { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0, playback_speed = 1 },
+    { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0, playback_speed = 1 },
+    { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0, playback_speed = 1 },
+    { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0, playback_speed = 1 },
+    { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0, playback_speed = 1 },
+    { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0, playback_speed = 1 }
+}
+
+
+chords = {
+    { 0 },
+    { 0, 12 },
+    { 0, 5 },
+    { 0, 7 },
+    { 0, 2, 7 },
+    { 0, 5, 7 },
+    { 0, 5, 10 },
+    { 0, 7, 14 },
+    { 0, 3, 7 },
+    { 0, 4, 7 },
+    { 0, 7, 15 },
+    { 0, 7, 16 },
+    { 0, 4, 7, 11 },
+    { 0, 3, 7, 10 },
+    { 0, 7, 10 },
+    { 0, 7, 12 },
 }
 
 channels = {
-    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0 },
-    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0 },
-    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0 },
-    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0 },
-    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0 },
-    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0 },
-    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0 },
-    { velocity = 90, velocity_range = 0, sustain = 0, octave = 0, transpose = 0 }
+    { velocity = 90, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] },
+    { velocity = 90, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] },
+    { velocity = 90, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] },
+    { velocity = 90, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] },
+    { velocity = 90, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] },
+    { velocity = 90, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] },
+    { velocity = 90, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] },
+    { velocity = 90, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] }
+
 }
 
 --
@@ -85,14 +106,18 @@ function start_playback(index)
     recorder.playback_index = 1
     recorder.record_start_time = global_time
 
-    -- ✅ Now fully ignores LED updates in edit mode
+    -- ✅ Adjust playback timing based on speed
+    local interval = 10 / recorder.playback_speed -- Default: 10ms per step
+    metro_set(2, interval, -1)
+
+    -- ✅ Ignore LED updates in edit mode
     if not channel_edit_mode then
         local x, y = (index - 1) % 4 + 9, math.floor((index - 1) / 4) + 1
         grid_led(x, y, 10)
         grid_refresh()
     end
 
-    print("Recorder " .. index .. " started playback with " .. #recorder.recording .. " events")
+    print("Recorder " .. index .. " started playback with speed " .. recorder.playback_speed)
 end
 
 function stop_playback(index)
@@ -101,7 +126,7 @@ function stop_playback(index)
 
     -- ✅ Block LED clearing if in edit mode
     for _, event in ipairs(recorder.recording) do
-        grid_led(event.x, event.y, 0)     -- Turns off playback lights only if not in edit mode
+        grid_led(event.x, event.y, 0) -- Turns off playback lights only if not in edit mode
     end
 
     -- ✅ Prevent recorder LED from coming back in edit mode
@@ -193,37 +218,27 @@ function handle_channel_edit_mode(x, y, z)
         display_channel_edit_mode()
     end
 
-    if y == 3 then
+    if y == 4 then
         handle_velocity_selection(x, y, z)
-    elseif y == 4 then
-        handle_velocity_range_selection(x, y, z)
     elseif y == 5 then
-        handle_sustain_selection(x, y, z)
-    elseif y == 6 then
-        handle_octave_selection(x, y, z)
+        handle_velocity_range_selection(x, y, z)
     elseif y == 7 then
+        handle_sustain_selection(x, y, z)
+    elseif y == 9 then
+        handle_octave_selection(x, y, z)
+    elseif y == 10 then
         handle_channel_transpose_selection(x, y, z)
+    elseif y == 12 then
+        handle_chord_selection(x, y, z) -- New chord selection
     end
 end
 
 ------------------------------------------------------------------------------------------------------------------------
 
-function handle_velocity_range_selection(x, y, z)
-    if z == 1 and y == 4 then
-        local new_range = math.floor((x / 16) * 127)
-        if shift == 1 then
-            new_range = 0
-        end
-        channels[midichannel].velocity_range = new_range
 
-        display_velocity_range_for_channel()
-
-        print("Channel " .. midichannel .. " velocity range set to " .. new_range)
-    end
-end
 
 function handle_velocity_selection(x, y, z)
-    if z == 1 and y == 3 then
+    if z == 1 and y == 4 then
         local new_velocity = math.floor((x / 16) * 127)
         if shift == 1 then
             new_velocity = 0
@@ -236,8 +251,22 @@ function handle_velocity_selection(x, y, z)
     end
 end
 
-function handle_sustain_selection(x, y, z)
+function handle_velocity_range_selection(x, y, z)
     if z == 1 and y == 5 then
+        local new_range = math.floor((x / 16) * 127)
+        if shift == 1 then
+            new_range = 0
+        end
+        channels[midichannel].velocity_range = new_range
+
+        display_velocity_range_for_channel()
+
+        print("Channel " .. midichannel .. " velocity range set to " .. new_range)
+    end
+end
+
+function handle_sustain_selection(x, y, z)
+    if z == 1 and y == 7 then
         local channel = channels[midichannel]
 
         -- Toggle sustain ON/OFF
@@ -263,7 +292,7 @@ function handle_sustain_selection(x, y, z)
 end
 
 function handle_octave_selection(x, y, z)
-    if z == 1 and y == 6 then
+    if z == 1 and y == 9 then
         -- Turn off all currently held notes before changing octave
         for note, _ in pairs(held_notes) do
             send_note_off(midichannel, note)
@@ -280,6 +309,9 @@ function handle_octave_selection(x, y, z)
         elseif x > 9 then
             channels[midichannel].octave = math.min(4, x - 9)  -- Right side increases octave
         end
+        if shift == 1 then
+            channels[midichannel].octave = 0
+        end
 
         display_octave_for_channel()
         print("Channel " .. midichannel .. " octave set to " .. channels[midichannel].octave)
@@ -287,7 +319,7 @@ function handle_octave_selection(x, y, z)
 end
 
 function handle_channel_transpose_selection(x, y, z)
-    if z == 1 and y == 7 then
+    if z == 1 and y == 10 then
         if x == 8 or x == 9 then
             channels[midichannel].transpose = 0
         elseif x < 8 then
@@ -295,91 +327,87 @@ function handle_channel_transpose_selection(x, y, z)
         elseif x > 9 then
             channels[midichannel].transpose = x - 9
         end
+        if shift == 1 then
+            channels[midichannel].transpose = 0
+        end
 
         display_channel_transpose_for_channel()
         print("Channel " .. midichannel .. " transpose set to " .. channels[midichannel].transpose)
     end
 end
 
+function handle_chord_selection(x, y, z)
+    if z == 1 and y == 12 then
+        if x >= 1 and x <= #chords then
+            if shift == 1 then
+                channels[midichannel].chord = chords[1] -- Reset to single note
+            else
+                channels[midichannel].chord = chords[x] -- Select chord
+            end
+        end
+
+        display_chord_selection()
+        print("Channel " .. midichannel .. " chord set to index " .. x)
+    end
+end
+
 ------------------------------------------------------------------------------------------------------------------------
 
 -- DISPLAY
-function display_octave_for_channel()
-    for i = 1, 16 do
-        grid_led(i, 6, 0) -- Clear row
-    end
 
-    -- Pre-light the full octave range (-4 to +4)
-    for i = 4, 13 do
-        grid_led(i, 6, 3)
-    end
-
-    local octave = channels[midichannel].octave
-    local center_x = 8 -- Middle keys (8 & 9) represent octave 0
-
-    -- Highlight selected octave
-    if octave == 0 then
-        grid_led(8, 6, 15)
-        grid_led(9, 6, 15)
-    elseif octave < 0 then
-        grid_led(center_x + octave, 6, 10)     -- Left side (down)
-    else
-        grid_led(center_x + octave + 1, 6, 10) -- Right side (up)
-    end
-
-    grid_refresh()
-end
 
 function display_velocity_for_channel()
     for i = 1, 16 do
-        grid_led(i, 3, 0)
+        grid_led(i, 4, 0)
     end
 
     local velocity_x = math.ceil(channels[midichannel].velocity / 127 * 16)
 
     for i = 1, velocity_x do
-        grid_led(i, 3, 1)
+        grid_led(i, 4, 1)
     end
 
-    grid_led(velocity_x, 3, 10)
+    grid_led(velocity_x, 4, 10)
     grid_refresh()
 end
 
 function display_velocity_range_for_channel()
     for i = 1, 16 do
-        grid_led(i, 4, 0)
+        grid_led(i, 5, 0)
     end
 
     local range_x = math.ceil(channels[midichannel].velocity_range / 127 * 16)
     for i = 1, range_x do
-        grid_led(i, 4, 1)
+        grid_led(i, 5, 1)
     end
 
-    grid_led(range_x, 4, 10)
+    grid_led(range_x, 5, 10)
     grid_refresh()
 end
 
 function display_channel_transpose_for_channel()
     for i = 1, 16 do
-        grid_led(i, 7, 0) -- Clear row
+        grid_led(i, 10, 0) -- Clear row
     end
 
     -- Pre-light the full transpose range (-7 to +7)
     for i = 1, 16 do
-        grid_led(i, 7, 3)
+        grid_led(i, 10, 1)
     end
 
     local transpose = channels[midichannel].transpose
     local center_x = 8 -- Middle keys (8 & 9) represent transpose 0
+    grid_led(8, 10, 8)
+    grid_led(9, 10, 8)
 
     -- Highlight selected transpose
     if transpose == 0 then
-        grid_led(8, 7, 15)
-        grid_led(9, 7, 15)
+        grid_led(8, 10, 15)
+        grid_led(9, 10, 15)
     elseif transpose < 0 then
-        grid_led(center_x + transpose, 7, 10)     -- Left side (down)
+        grid_led(center_x + transpose, 10, 10)     -- Left side (down)
     else
-        grid_led(center_x + transpose + 1, 7, 10) -- Right side (up)
+        grid_led(center_x + transpose + 1, 10, 10) -- Right side (up)
     end
 
     grid_refresh()
@@ -387,13 +415,56 @@ end
 
 function display_sustain_for_channel()
     for i = 1, 16 do
-        grid_led(i, 5, 0) -- Clear row first
+        grid_led(i, 7, 0) -- Clear row first
     end
 
     -- Use different LED brightness for a pattern
     for i = 1, 16, 3 do
         local brightness = (channels[midichannel].sustain == 1) and 15 or 3
-        grid_led(i, 5, brightness) -- Bright LEDs for sustain ON
+        grid_led(i, 7, brightness) -- Bright LEDs for sustain ON
+    end
+
+    grid_refresh()
+end
+
+function display_octave_for_channel()
+    for i = 1, 16 do
+        grid_led(i, 9, 0) -- Clear row
+    end
+
+    -- Pre-light the full octave range (-4 to +4)
+    for i = 4, 13 do
+        grid_led(i, 9, 1)
+    end
+    grid_led(8, 9, 8)
+    grid_led(9, 9, 8)
+
+    local octave = channels[midichannel].octave
+    local center_x = 8 -- Middle keys (8 & 9) represent octave 0
+
+    -- Highlight selected octave
+    if octave == 0 then
+        grid_led(8, 9, 17)
+        grid_led(9, 9, 15)
+    elseif octave < 0 then
+        grid_led(center_x + octave, 9, 10)     -- Left side (down)
+    else
+        grid_led(center_x + octave + 1, 9, 10) -- Right side (up)
+    end
+
+    grid_refresh()
+end
+
+function display_chord_selection()
+    for i = 1, 16 do
+        grid_led(i, 12, 1) -- Dim pre-highlight for all options
+    end
+
+    -- Highlight selected chord
+    for i, chord in ipairs(chords) do
+        if chord == channels[midichannel].chord then
+            grid_led(i, 12, 15) -- Brightest for selected chord
+        end
     end
 
     grid_refresh()
@@ -405,6 +476,7 @@ function display_channel_edit_mode()
     display_sustain_for_channel()
     display_octave_for_channel()
     display_channel_transpose_for_channel()
+    display_chord_selection()
 end
 
 --
@@ -448,11 +520,15 @@ function handle_note_generation(x, y, z, playback_channel)
     local target_channel = playback_channel or midichannel
     local channel_settings = channels[target_channel]
 
+    -- Get base note
     local raw_note = x + (7 - y) * 5 + 50
+
+    -- Apply scale quantization
     local scale = scales[selected_scale]
     local octave_offset = math.floor(raw_note / 12) * 12
     local closest_note_in_scale = scale[1]
 
+    -- Find the closest note in the scale
     for _, note in ipairs(scale) do
         local scaled_note = octave_offset + note
         if math.abs(raw_note - scaled_note) < math.abs(raw_note - (octave_offset + closest_note_in_scale)) then
@@ -460,33 +536,46 @@ function handle_note_generation(x, y, z, playback_channel)
         end
     end
 
+    -- Apply per-channel transpose & octave adjustments
     local quantized_note = octave_offset + closest_note_in_scale
     quantized_note = quantized_note + (channel_settings.octave * 12) + channel_settings.transpose + transpose
 
+    -- Compute velocity with randomness
     local base_velocity = channel_settings.velocity
     local velocity_range = channel_settings.velocity_range
     local random_offset = math.random(-velocity_range, velocity_range)
-    local final_velocity = math.max(0, math.min(127, base_velocity + random_offset))
+    local final_velocity = math.max(0, math.min(127, base_velocity + random_offset)) -- Clamp between 0-127
+
+    -- Get the selected chord intervals
+    local chord_intervals = channel_settings.chord
 
     if z == 1 then
-        -- Send MIDI Note On
-        midi_tx(0, 0x90 + target_channel - 1, quantized_note, final_velocity)
+        -- ✅ Play all notes in the selected chord
+        for _, interval in ipairs(chord_intervals) do
+            local chord_note = quantized_note + interval
+            midi_tx(0, 0x90 + target_channel - 1, chord_note, final_velocity)
 
-        -- Store note if sustain is on
-        if channel_settings.sustain == 1 then
-            held_notes[quantized_note] = true
+            -- ✅ Store held chord notes in a per-channel table
+            if not held_notes[target_channel] then
+                held_notes[target_channel] = {}
+            end
+            held_notes[target_channel][chord_note] = true
         end
 
+        -- ✅ Prevent LEDs from changing in edit mode
         if not channel_edit_mode then
             grid_led(x, y, 15) -- Bright LED when playing
         end
     else
-        -- Always send Note Off, even if sustain is on
-        midi_tx(0, 0x80 + target_channel - 1, quantized_note, 0)
+        -- ✅ Release all chord notes properly
+        if held_notes[target_channel] then
+            for _, interval in ipairs(chord_intervals) do
+                local chord_note = quantized_note + interval
+                send_note_off(target_channel, chord_note)
+            end
+        end
 
-        -- Remove from held notes
-        held_notes[quantized_note] = nil
-
+        -- ✅ Prevent LEDs from being turned off in edit mode
         if not channel_edit_mode then
             grid_led(x, y, 0)
         end
@@ -523,25 +612,31 @@ function handle_edit_mode_toggle(x, y, z)
 end
 
 grid = function(x, y, z)
-    -- 🎛 Handle Edit Mode Toggle (Row 1, Key 15)
+    -- 🎬 Handle Chord Selection (Row 12) (Only in Edit Mode)
+    if y == 12 and channel_edit_mode then
+        handle_chord_selection(x, y, z)
+        return
+    end
+
+    -- 🎛 Handle Edit Mode Toggles
     if x == 15 and y == 1 then
         handle_edit_mode_toggle(x, y, z)
         return
     end
 
-    -- 🎛 Handle Shift Button (Row 1, Column 16)
+    -- 🎛 Handle Shift Button
     if x == 16 and y == 1 then
         handle_shift(x, y, z)
         return
     end
 
-    -- 🎬 Handle Pattern Recorder Buttons (Row 1 & 2, Keys 8-11)
+    -- 🎬 Handle Pattern Recorder Buttons
     if (y == 1 or y == 2) and x >= 9 and x <= 12 then
         handle_pattern_recorder(x, y, z)
         return
     end
 
-    -- 🎹 Handle Scale Selection & Transpose Buttons
+    -- 🎹 Handle Scale Selection & Transpose
     if y == 16 then
         if x > 1 and x <= #scales + 1 then
             handle_scale_selection(x)
@@ -551,7 +646,7 @@ grid = function(x, y, z)
         return
     end
 
-    -- 🎛 Handle MIDI Channel Selection (Rows 1-2, Columns 1-4)
+    -- 🎛 Handle MIDI Channel Selection
     if y < 3 then
         handle_channel_selection(x, y, z)
         return
@@ -567,13 +662,15 @@ grid = function(x, y, z)
     end
 
     if any_recorder_active then
-        record_event(x, y, z) -- Only record if at least one recorder is active
+        record_event(x, y, z)
     end
+
     if channel_edit_mode then
         handle_channel_edit_mode(x, y, z)
     else
         handle_note_generation(x, y, z)
     end
+
     grid_refresh()
 end
 
@@ -588,11 +685,13 @@ function metro(index, stage)
             if recorder.playback_active and recorder.playback_index <= #recorder.recording then
                 local event = recorder.recording[recorder.playback_index]
 
-                if global_time >= event.time + recorder.record_start_time then
+                -- ✅ Scale event timing using playback speed
+                local speed_factor = 1 / recorder.playback_speed
+                if global_time >= event.time * speed_factor + recorder.record_start_time then
                     -- Turn off the previous note before playing the next
                     if recorder.playback_index > 1 then
                         local prev_event = recorder.recording[recorder.playback_index - 1]
-                        midi_tx(0, 0x80 + prev_event.channel - 1, prev_event.x + prev_event.y * 5 + 50, 0)
+                        send_note_off(prev_event.channel, prev_event.x + prev_event.y * 5 + 50)
                     end
 
                     -- Play the next note
@@ -609,10 +708,11 @@ function metro(index, stage)
 
                     recorder.playback_index = recorder.playback_index + 1
 
+                    -- ✅ If the playback reaches the end, loop it back
                     if recorder.playback_index > #recorder.recording then
                         recorder.playback_index = 1
                         recorder.record_start_time = global_time
-                        print("Recorder " .. rec_index .. " looped playback")
+                        print("Recorder " .. rec_index .. " looped playback at speed " .. recorder.playback_speed)
                     end
                 end
             end
@@ -650,9 +750,14 @@ function clear_channel_leds(channel)
 end
 
 function send_note_off(channel, note)
-    if held_notes[note] then
+    if held_notes[channel] and held_notes[channel][note] then
         midi_tx(0, 0x80 + channel - 1, note, 0) -- Send Note Off
-        held_notes[note] = nil                  -- Remove from held notes
+        held_notes[channel][note] = nil         -- Remove from held notes
+
+        -- ✅ If no more held notes in this channel, clear the table
+        if next(held_notes[channel]) == nil then
+            held_notes[channel] = nil
+        end
     end
 end
 
