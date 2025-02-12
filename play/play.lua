@@ -1,14 +1,16 @@
 -- Grid Pattern Recorder with Playback and Visual Indicators
 print("Grid Pattern Recorder Initialized")
-
+TRANSPOSE_DEFAULT = 0
 global_time = 0
 playback_active = false
 playback_index = 1
 midichannel = 1
 flash_state = false
+
 screen_mode = { channel_edit = 1, play = 2, pattern_edit = 3 }
 current_screen = screen_mode.play
-transpose = 24
+
+transpose = TRANSPOSE_DEFAULT
 shift = 0
 selected_scale = 1
 scales = {
@@ -120,16 +122,8 @@ function stop_playback(index)
     local recorder = recorders[index]
     recorder.playback_active = false
 
-    -- ✅ Block LED clearing if in edit mode
-    for _, event in ipairs(recorder.recording) do
-        grid_led(event.x, event.y, 0) -- Turns off playback lights only if not in edit mode
-    end
-
-    -- ✅ Prevent recorder LED from coming back in edit mode
-    local x, y = (index - 1) % 4 + 9, math.floor((index - 1) / 4) + 1
-    grid_led(x, y, 5)
-    grid_refresh()
-
+    -- ✅ Let `refresh_recorder_leds()` handle LED updates
+    refresh_recorder_leds()
 
     print("Recorder " .. index .. " stopped playback")
 end
@@ -185,20 +179,12 @@ end
 
 function handle_transpose(x, z)
     if z == 1 then
-        if x == 14 then
-            transpose = transpose - 1
-        elseif x == 15 then
-            transpose = transpose + 1
+        transpose = transpose + (x == 14 and -1 or x == 15 and 1 or 0)
+        if shift == 1 then
+            transpose = TRANSPOSE_DEFAULT
         end
-
-        if transpose == 24 then
-            grid_led(14, 16, 5)
-            grid_led(15, 16, 5)
-        else
-            grid_led(14, 16, transpose < 24 and 15 or 5)
-            grid_led(15, 16, transpose > 24 and 15 or 5)
-        end
-
+        grid_led(14, 16, transpose < TRANSPOSE_DEFAULT and 15 or 5)
+        grid_led(15, 16, transpose > TRANSPOSE_DEFAULT and 15 or 5)
         grid_refresh()
         print("Transpose set to:", transpose)
     end
@@ -235,6 +221,54 @@ end
 function handle_pattern_edit_mode(x, y, z)
     clear_section_leds()
     print("Recorder Edit Mode")
+end
+
+function handle_pattern_playback_speed(x, y, z)
+    if z == 1 and y >= 4 and y <= 11 then
+        local speed_positions = { 4, 5, 6, 7, 8, 9, 10, 11, 12 }
+        local speeds = { 4, 2, 1.5, 1.25, 1, 0.75, 0.5, 0.33, 0.25 }
+
+        -- Find the selected speed
+        for i, pos in ipairs(speed_positions) do
+            if x == pos then
+                local selected_speed = speeds[i] or 1 -- Default to 1x if invalid
+
+                local pattern_index = y - 3           -- ✅ Shift row mapping to match new range
+                if recorders[pattern_index] then
+                    recorders[pattern_index].playback_speed = selected_speed
+                    print("Pattern " .. pattern_index .. " playback speed set to " .. selected_speed .. "x")
+                end
+
+                break
+            end
+        end
+
+        display_pattern_edit_mode()
+    end
+end
+
+function display_pattern_edit_mode()
+    clear_section_leds()
+
+    -- ✅ Update playback speed display for each pattern (Rows 4-11)
+    for i, recorder in ipairs(recorders) do
+        display_playback_speed(3 + i, "Pattern " .. i, recorder.playback_speed)
+    end
+
+    -- ✅ Ensure UI updates
+    grid_refresh()
+end
+
+function display_playback_speed(y, label, speed)
+    local speed_positions = { 4, 5, 6, 7, 8, 9, 10, 11, 12 }
+    local speeds = { 4, 2, 1.5, 1.25, 1, 0.75, 0.5, 0.33, 0.25 }
+
+    -- Highlight the currently selected speed
+    for i, value in ipairs(speeds) do
+        grid_led(speed_positions[i], y, value == speed and 15 or 5)
+    end
+
+    print(label .. " Speed: " .. speed .. "x")
 end
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -478,8 +512,6 @@ end
 function display_channel_edit_mode()
     clear_section_leds()
 
-
-
     display_velocity_for_channel()
     display_velocity_range_for_channel()
     display_sustain_for_channel()
@@ -559,8 +591,7 @@ function handle_note_generation(x, y, z, playback_channel)
             held_notes[target_channel][chord_note] = true
         end
 
-        -- ✅ Prevent LEDs from changing in edit mode
-        if current_screen ~= screen_mode.channel_edit then
+        if current_screen == screen_mode.play then
             grid_led(x, y, 15)
         end
     else
@@ -572,7 +603,7 @@ function handle_note_generation(x, y, z, playback_channel)
         end
 
         -- ✅ Prevent LEDs from being turned off in edit mode
-        if current_screen ~= screen_mode.channel_edit then
+        if current_screen == screen_mode.play then
             grid_led(x, y, 0)
         end
     end
@@ -590,26 +621,36 @@ end
 function handle_edit_mode_toggle(x, y, z)
     if x == 15 and y == 1 and z == 1 then
         -- ✅ Toggle between play and edit mode
-        if current_screen == screen_mode.channel_edit then
-            current_screen = screen_mode.play
-        else
-            current_screen = screen_mode.channel_edit
-        end
+        current_screen = (current_screen == screen_mode.channel_edit) and screen_mode.play or screen_mode.channel_edit
 
-        -- ✅ Update LED feedback for Edit Mode toggle
-        grid_led(15, 1, current_screen == screen_mode.channel_edit and 15 or 5)
+        -- ✅ Already updates LEDs
+        refresh_recorder_leds()
         grid_refresh()
 
         if current_screen == screen_mode.channel_edit then
-            -- ✅ Show edit mode interface
             display_channel_edit_mode()
             print("Edit Mode Enabled")
         else
-            -- ✅ Instead of full grid reset, refresh recorder LEDs properly
-            refresh_recorder_leds()
             print("Play Mode Enabled")
         end
     end
+end
+
+function handle_pattern_edit_toggle(x, y, z)
+    if z == 1 then
+        if current_screen == screen_mode.pattern_edit then
+            current_screen = screen_mode.play
+            grid_led(14, 1, 1)
+            print("Pattern Edit Mode Disabled")
+            initialize_grid() -- ✅ Ensure full grid reset when leaving pattern edit mode
+        else
+            current_screen = screen_mode.pattern_edit
+            grid_led(14, 1, 10)
+            print("Pattern Edit Mode Enabled")
+            display_pattern_edit_mode() -- ✅ Immediately display pattern edit UI
+        end
+    end
+    grid_refresh()
 end
 
 grid = function(x, y, z)
@@ -619,7 +660,11 @@ grid = function(x, y, z)
         return
     end
 
-
+    -- 🎛 Handle Pattern Edit Mode Toggle
+    if x == 14 and y == 1 then
+        handle_pattern_edit_toggle(x, y, z)
+        return
+    end
 
     -- 🎛 Handle Shift Button
     if x == 16 and y == 1 then
@@ -662,13 +707,21 @@ grid = function(x, y, z)
         record_event(x, y, z)
     end
 
+    -- 🎛 Handle Playback Speed Selection in `pattern_edit` Mode
+    if current_screen == screen_mode.pattern_edit then
+        handle_pattern_playback_speed(x, y, z)
+        return
+    end
+
+
     if current_screen == screen_mode.channel_edit then
         handle_channel_edit_mode(x, y, z)
-    elseif current_screen == screen_mode.pattern_edit then
-        handle_pattern_edit_mode(x, y, z)
     else
         handle_note_generation(x, y, z)
     end
+
+
+
 
     grid_refresh()
 end
@@ -696,14 +749,15 @@ function metro(index, stage)
                     -- Play the next note
                     handle_note_generation(event.x, event.y, event.z, event.channel)
 
-                    -- Prevent LED updates in edit mode
-                    if current_screen == screen_mode.play then
+                    -- Prevent LED updates in edit and pattern edit mode
+                    if current_screen == screen_mode.play and not current_screen == screen_mode.pattern_edit then
                         if event.channel == midichannel then
                             grid_led(event.x, event.y, event.z * 15) -- Full brightness for active channel
                         else
                             grid_led(event.x, event.y, event.z * 1)  -- Dim for other channels
                         end
                     end
+
 
                     recorder.playback_index = recorder.playback_index + 1
 
@@ -770,6 +824,11 @@ function clear_section_leds()
 end
 
 function refresh_recorder_leds()
+    -- ✅ Do not refresh if in pattern edit mode
+    if current_screen == screen_mode.pattern_edit then
+        return
+    end
+
     initialize_grid()
 
     for index, recorder in ipairs(recorders) do
@@ -795,7 +854,7 @@ end
 function initialize_grid()
     for x = 1, 16 do
         for y = 1, 16 do
-            grid_led(x, y, 0) -- Clear everything
+            grid_led(x, y, 0)
         end
     end
 
@@ -812,15 +871,11 @@ function initialize_grid()
         end
     end
 
+
     grid_led(14, 16, 5)
     grid_led(15, 16, 5)
 
-    -- ✅ Add LED update for pattern_edit mode in the first row
-    if current_screen == screen_mode.pattern_edit then
-        for x = 1, 16 do
-            grid_led(x, 1, 7) -- Use a distinct LED brightness for pattern edit mode
-        end
-    end
+
 
     for y = 1, 2 do
         for x = 9, 12 do
@@ -832,6 +887,8 @@ function initialize_grid()
 
     -- ✅ Update Channel Edit Mode Toggle Button
     grid_led(15, 1, current_screen == screen_mode.channel_edit and 15 or 5)
+
+    grid_led(14, 1, current_screen == screen_mode.pattern_edit and 10 or 1)
 
     -- ✅ Update Shift Button
     grid_led(16, 1, shift == 1 and 15 or 3)
