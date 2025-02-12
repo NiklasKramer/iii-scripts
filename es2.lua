@@ -20,7 +20,7 @@ scales = {
 held_notes = {}
 
 recorders = {
-    { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0, playback_speed = 2 },
+    { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0, playback_speed = 1 },
     { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0, playback_speed = 1 },
     { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0, playback_speed = 1 },
     { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0, playback_speed = 1 },
