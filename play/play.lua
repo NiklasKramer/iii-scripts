@@ -72,6 +72,7 @@ channels = {
 function start_recording(index)
     local recorder = recorders[index]
     recorder.recording = {}
+    recorder.playback_speed = 1
     recorder.recording_active = true
     recorder.record_start_time = global_time
     flash_state = true
@@ -89,10 +90,13 @@ function stop_recording(index)
     flash_state = false
     metro_set(4, 0)
 
+    -- ✅ Clear all stuck notes when stopping recording
+    clear_all_held_notes()
+
     -- ✅ Properly update LED when recording stops
     refresh_recorder_leds()
 
-    print("Recorder " .. index .. " stopped recording")
+    print("Recorder " .. index .. " stopped recording and cleared all stuck notes")
 end
 
 function start_playback(index)
@@ -122,10 +126,13 @@ function stop_playback(index)
     local recorder = recorders[index]
     recorder.playback_active = false
 
+    -- ✅ Clear all stuck notes when stopping playback
+    clear_all_held_notes()
+
     -- ✅ Let `refresh_recorder_leds()` handle LED updates
     refresh_recorder_leds()
 
-    print("Recorder " .. index .. " stopped playback")
+    print("Recorder " .. index .. " stopped playback and cleared all stuck notes")
 end
 
 function record_event(x, y, z)
@@ -179,6 +186,9 @@ end
 
 function handle_transpose(x, z)
     if z == 1 then
+        clear_all_held_notes() -- ✅ Use helper function
+
+        -- ✅ Apply transpose
         transpose = transpose + (x == 14 and -1 or x == 15 and 1 or 0)
         if shift == 1 then
             transpose = TRANSPOSE_DEFAULT
@@ -332,21 +342,15 @@ end
 
 function handle_octave_selection(x, y, z)
     if z == 1 and y == 9 then
-        -- Turn off all currently held notes before changing octave
-        for note, _ in pairs(held_notes) do
-            send_note_off(midichannel, note)
-        end
+        clear_all_held_notes() -- ✅ Use helper function
 
-        -- Clear stored notes
-        held_notes = {}
-
-        -- Handle octave change logic
+        -- ✅ Change octave based on the grid position
         if x == 8 or x == 9 then
-            channels[midichannel].octave = 0                   -- Reset to octave 0
+            channels[midichannel].octave = 0
         elseif x < 8 then
-            channels[midichannel].octave = math.max(-4, x - 8) -- Left side lowers octave
+            channels[midichannel].octave = math.max(-4, x - 8)
         elseif x > 9 then
-            channels[midichannel].octave = math.min(4, x - 9)  -- Right side increases octave
+            channels[midichannel].octave = math.min(4, x - 9)
         end
         if shift == 1 then
             channels[midichannel].octave = 0
@@ -359,6 +363,9 @@ end
 
 function handle_channel_transpose_selection(x, y, z)
     if z == 1 and y == 10 then
+        clear_all_held_notes() -- ✅ Use helper function
+
+        -- ✅ Apply new transpose setting
         if x == 8 or x == 9 then
             channels[midichannel].transpose = 0
         elseif x < 8 then
@@ -377,6 +384,9 @@ end
 
 function handle_chord_selection(x, y, z)
     if z == 1 and y == 12 then
+        clear_all_held_notes() -- ✅ Use helper function
+
+        -- ✅ Apply new chord
         if x >= 1 and x <= #chords then
             if shift == 1 then
                 channels[midichannel].chord = chords[1] -- Reset to single note
@@ -643,6 +653,9 @@ function handle_pattern_edit_toggle(x, y, z)
             grid_led(14, 1, 1)
             print("Pattern Edit Mode Disabled")
             initialize_grid() -- ✅ Ensure full grid reset when leaving pattern edit mode
+
+            -- ✅ FIX: Restore recorder LEDs immediately
+            refresh_recorder_leds()
         else
             current_screen = screen_mode.pattern_edit
             grid_led(14, 1, 10)
@@ -802,12 +815,21 @@ function clear_channel_leds(channel)
     grid_refresh()
 end
 
+function clear_all_held_notes()
+    for channel, notes in pairs(held_notes) do
+        for note, _ in pairs(notes) do
+            send_note_off(channel, note)
+        end
+    end
+    held_notes = {} -- ✅ Reset the held notes table after turning them off
+end
+
 function send_note_off(channel, note)
     if held_notes[channel] and held_notes[channel][note] then
-        midi_tx(0, 0x80 + channel - 1, note, 0) -- Send Note Off
-        held_notes[channel][note] = nil         -- Remove from held notes
+        midi_tx(0, 0x80 + channel - 1, note, 0) -- ✅ Send MIDI Note Off
+        held_notes[channel][note] = nil         -- ✅ Remove from tracking
 
-        -- ✅ If no more held notes in this channel, clear the table
+        -- ✅ If no more held notes exist for this channel, clear the table
         if next(held_notes[channel]) == nil then
             held_notes[channel] = nil
         end
