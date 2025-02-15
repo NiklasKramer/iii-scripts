@@ -1,28 +1,31 @@
 -- Grid Pattern Recorder with Playback and Visual Indicators
 print("Grid Pattern Recorder Initialized")
-TRANSPOSE_DEFAULT = 0
-global_time = 0
-playback_active = false
-playback_index = 1
-midichannel = 1
-flash_state = false
+TRANSPOSE_DEFAULT      = 0
+DEFAULT_VELOCITY       = 90
+DEFAULT_INTERVAL       = 10
+global_time            = 0
+playback_active        = false
+playback_index         = 1
+midichannel            = 1
+flash_state            = false
 
-screen_mode = { channel_edit = 1, play = 2, pattern_edit = 3 }
-current_screen = screen_mode.play
+screen_mode            = { channel_edit = 1, play = 2, pattern_edit = 3 }
+current_screen         = screen_mode.play
 
-transpose = TRANSPOSE_DEFAULT
-shift = 0
-selected_scale = 1
-scales = {
+transpose              = TRANSPOSE_DEFAULT
+shift                  = 0
+selected_scale         = 1
+scales                 = {
     { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
     { 0, 2, 4, 7, 9 },
     { 0, 2, 4, 7, 9, 11 },
     { 0, 2, 4, 5, 7, 9 },
     { 0, 2, 4, 5, 7, 9, 11 }
 }
-held_notes = {}
 
-recorders = {
+playback_speed_options = { 0.25, 0.33, 0.5, 0.75, 1, 1.25, 1.5, 2, 4 }
+
+recorders              = {
     { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0, playback_speed = 1 },
     { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0, playback_speed = 1 },
     { recording = {}, recording_active = false, playback_active = false, playback_index = 1, record_start_time = 0, playback_speed = 1 },
@@ -54,16 +57,19 @@ chords = {
 }
 
 channels = {
-    { velocity = 90, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] },
-    { velocity = 90, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] },
-    { velocity = 90, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] },
-    { velocity = 90, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] },
-    { velocity = 90, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] },
-    { velocity = 90, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] },
-    { velocity = 90, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] },
-    { velocity = 90, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] }
+    { velocity = DEFAULT_VELOCITY, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] },
+    { velocity = DEFAULT_INTERVAL, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] },
+    { velocity = DEFAULT_INTERVAL, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] },
+    { velocity = DEFAULT_INTERVAL, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] },
+    { velocity = DEFAULT_INTERVAL, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] },
+    { velocity = DEFAULT_INTERVAL, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] },
+    { velocity = DEFAULT_INTERVAL, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] },
+    { velocity = DEFAULT_INTERVAL, velocity_range = 7, sustain = 0, octave = 0, transpose = 0, chord = chords[1] }
 
 }
+
+held_notes = {}
+
 
 --
 --
@@ -90,10 +96,7 @@ function stop_recording(index)
     flash_state = false
     metro_set(4, 0)
 
-    -- ✅ Clear all stuck notes when stopping recording
     clear_all_held_notes()
-
-    -- ✅ Properly update LED when recording stops
     refresh_recorder_leds()
 
     print("Recorder " .. index .. " stopped recording and cleared all stuck notes")
@@ -109,15 +112,10 @@ function start_playback(index)
     recorder.playback_index = 1
     recorder.record_start_time = global_time
 
-    -- ✅ Adjust playback timing based on speed
-    local interval = 10 / recorder.playback_speed -- Default: 10ms per step
+    local interval = DEFAULT_INTERVAL / (recorder.playback_speed or 1)
     metro_set(2, interval, -1)
 
-    -- ✅ Ignore LED updates in edit mode
-    local x, y = (index - 1) % 4 + 9, math.floor((index - 1) / 4) + 1
-    grid_led(x, y, 10)
-    grid_refresh()
-
+    refresh_recorder_leds()
 
     print("Recorder " .. index .. " started playback with speed " .. recorder.playback_speed)
 end
@@ -126,10 +124,11 @@ function stop_playback(index)
     local recorder = recorders[index]
     recorder.playback_active = false
 
-    -- ✅ Clear all stuck notes when stopping playback
+    recorder.playback_index = 1
+    recorder.record_start_time = 0
+
     clear_all_held_notes()
 
-    -- ✅ Let `refresh_recorder_leds()` handle LED updates
     refresh_recorder_leds()
 
     print("Recorder " .. index .. " stopped playback and cleared all stuck notes")
@@ -186,9 +185,8 @@ end
 
 function handle_transpose(x, z)
     if z == 1 then
-        clear_all_held_notes() -- ✅ Use helper function
+        clear_all_held_notes()
 
-        -- ✅ Apply transpose
         transpose = transpose + (x == 14 and -1 or x == 15 and 1 or 0)
         if shift == 1 then
             transpose = TRANSPOSE_DEFAULT
@@ -236,14 +234,13 @@ end
 function handle_pattern_playback_speed(x, y, z)
     if z == 1 and y >= 4 and y <= 11 then
         local speed_positions = { 4, 5, 6, 7, 8, 9, 10, 11, 12 }
-        local speeds = { 4, 2, 1.5, 1.25, 1, 0.75, 0.5, 0.33, 0.25 }
 
-        -- Find the selected speed
+
         for i, pos in ipairs(speed_positions) do
             if x == pos then
-                local selected_speed = speeds[i] or 1 -- Default to 1x if invalid
+                local selected_speed = playback_speed_options[i] or 1
 
-                local pattern_index = y - 3           -- ✅ Shift row mapping to match new range
+                local pattern_index = y - 3
                 if recorders[pattern_index] then
                     recorders[pattern_index].playback_speed = selected_speed
                     print("Pattern " .. pattern_index .. " playback speed set to " .. selected_speed .. "x")
@@ -260,21 +257,17 @@ end
 function display_pattern_edit_mode()
     clear_section_leds()
 
-    -- ✅ Update playback speed display for each pattern (Rows 4-11)
     for i, recorder in ipairs(recorders) do
         display_playback_speed(3 + i, "Pattern " .. i, recorder.playback_speed)
     end
 
-    -- ✅ Ensure UI updates
     grid_refresh()
 end
 
 function display_playback_speed(y, label, speed)
     local speed_positions = { 4, 5, 6, 7, 8, 9, 10, 11, 12 }
-    local speeds = { 4, 2, 1.5, 1.25, 1, 0.75, 0.5, 0.33, 0.25 }
 
-    -- Highlight the currently selected speed
-    for i, value in ipairs(speeds) do
+    for i, value in ipairs(playback_speed_options) do
         grid_led(speed_positions[i], y, value == speed and 15 or 5)
     end
 
@@ -318,15 +311,12 @@ function handle_sustain_selection(x, y, z)
     if z == 1 and y == 7 then
         local channel = channels[midichannel]
 
-        -- Toggle sustain ON/OFF
         local previous_sustain = channel.sustain
         channel.sustain = (channel.sustain == 0) and 1 or 0
 
-        -- Send MIDI CC64 for sustain pedal
         local sustain_value = (channel.sustain == 1) and 127 or 0
         midi_tx(0, 0xB0 + midichannel - 1, 64, sustain_value)
 
-        -- If sustain is OFF, ensure all held notes are released
         if previous_sustain == 1 and channel.sustain == 0 then
             for note, _ in pairs(held_notes) do
                 midi_tx(0, 0x80 + midichannel - 1, note, 0) -- Send Note Off
@@ -363,9 +353,8 @@ end
 
 function handle_channel_transpose_selection(x, y, z)
     if z == 1 and y == 10 then
-        clear_all_held_notes() -- ✅ Use helper function
+        clear_all_held_notes()
 
-        -- ✅ Apply new transpose setting
         if x == 8 or x == 9 then
             channels[midichannel].transpose = 0
         elseif x < 8 then
@@ -384,14 +373,13 @@ end
 
 function handle_chord_selection(x, y, z)
     if z == 1 and y == 12 then
-        clear_all_held_notes() -- ✅ Use helper function
+        clear_all_held_notes()
 
-        -- ✅ Apply new chord
         if x >= 1 and x <= #chords then
             if shift == 1 then
-                channels[midichannel].chord = chords[1] -- Reset to single note
+                channels[midichannel].chord = chords[1]
             else
-                channels[midichannel].chord = chords[x] -- Select chord
+                channels[midichannel].chord = chords[x]
             end
         end
 
@@ -436,27 +424,25 @@ end
 
 function display_channel_transpose_for_channel()
     for i = 1, 16 do
-        grid_led(i, 10, 0) -- Clear row
+        grid_led(i, 10, 0)
     end
 
-    -- Pre-light the full transpose range (-7 to +7)
     for i = 1, 16 do
         grid_led(i, 10, 1)
     end
 
     local transpose = channels[midichannel].transpose
-    local center_x = 8 -- Middle keys (8 & 9) represent transpose 0
+    local center_x = 8
     grid_led(8, 10, 8)
     grid_led(9, 10, 8)
 
-    -- Highlight selected transpose
     if transpose == 0 then
         grid_led(8, 10, 15)
         grid_led(9, 10, 15)
     elseif transpose < 0 then
-        grid_led(center_x + transpose, 10, 10)     -- Left side (down)
+        grid_led(center_x + transpose, 10, 10)
     else
-        grid_led(center_x + transpose + 1, 10, 10) -- Right side (up)
+        grid_led(center_x + transpose + 1, 10, 10)
     end
 
     grid_refresh()
@@ -562,10 +548,8 @@ function handle_note_generation(x, y, z, playback_channel)
     local target_channel = playback_channel or midichannel
     local channel_settings = channels[target_channel]
 
-    -- Get base note
     local raw_note = x + (7 - y) * 5 + 50
 
-    -- Apply scale quantization
     local scale = scales[selected_scale]
     local octave_offset = math.floor(raw_note / 12) * 12
     local closest_note_in_scale = scale[1]
@@ -577,16 +561,13 @@ function handle_note_generation(x, y, z, playback_channel)
         end
     end
 
-    -- Apply per-channel transpose & octave adjustments
     local quantized_note = octave_offset + closest_note_in_scale
     quantized_note = quantized_note + (channel_settings.octave * 12) + channel_settings.transpose + transpose
 
-    -- Compute velocity with randomness
     local base_velocity = channel_settings.velocity
     local velocity_range = channel_settings.velocity_range
     local final_velocity = math.max(0, math.min(127, base_velocity + math.random(-velocity_range, velocity_range)))
 
-    -- Get the selected chord intervals
     local chord_intervals = channel_settings.chord
 
     if z == 1 then
@@ -612,7 +593,6 @@ function handle_note_generation(x, y, z, playback_channel)
             end
         end
 
-        -- ✅ Prevent LEDs from being turned off in edit mode
         if current_screen == screen_mode.play then
             grid_led(x, y, 0)
         end
@@ -630,10 +610,8 @@ end
 
 function handle_edit_mode_toggle(x, y, z)
     if x == 15 and y == 1 and z == 1 then
-        -- ✅ Toggle between play and edit mode
         current_screen = (current_screen == screen_mode.channel_edit) and screen_mode.play or screen_mode.channel_edit
 
-        -- ✅ Already updates LEDs
         refresh_recorder_leds()
         grid_refresh()
 
@@ -652,46 +630,40 @@ function handle_pattern_edit_toggle(x, y, z)
             current_screen = screen_mode.play
             grid_led(14, 1, 1)
             print("Pattern Edit Mode Disabled")
-            initialize_grid() -- ✅ Ensure full grid reset when leaving pattern edit mode
 
-            -- ✅ FIX: Restore recorder LEDs immediately
             refresh_recorder_leds()
         else
             current_screen = screen_mode.pattern_edit
             grid_led(14, 1, 10)
             print("Pattern Edit Mode Enabled")
-            display_pattern_edit_mode() -- ✅ Immediately display pattern edit UI
+
+            display_pattern_edit_mode()
         end
     end
     grid_refresh()
 end
 
 grid = function(x, y, z)
-    -- 🎛 Handle Edit Mode Toggles
     if x == 15 and y == 1 then
         handle_edit_mode_toggle(x, y, z)
         return
     end
 
-    -- 🎛 Handle Pattern Edit Mode Toggle
     if x == 14 and y == 1 then
         handle_pattern_edit_toggle(x, y, z)
         return
     end
 
-    -- 🎛 Handle Shift Button
     if x == 16 and y == 1 then
         handle_shift(x, y, z)
         return
     end
 
-    -- 🎬 Handle Pattern Recorder Buttons
     if (y == 1 or y == 2) and x >= 9 and x <= 12 then
         handle_pattern_recorder(x, y, z)
         return
     end
 
-    -- 🎹 Handle Scale Selection & Transpose
     if y == 16 then
         if x > 1 and x <= #scales + 1 then
             handle_scale_selection(x)
@@ -701,13 +673,11 @@ grid = function(x, y, z)
         return
     end
 
-    -- 🎛 Handle MIDI Channel Selection
     if y < 3 then
         handle_channel_selection(x, y, z)
         return
     end
 
-    -- 🎼 Handle Note Generation & Recording
     local any_recorder_active = false
     for _, recorder in ipairs(recorders) do
         if recorder.recording_active then
@@ -720,7 +690,6 @@ grid = function(x, y, z)
         record_event(x, y, z)
     end
 
-    -- 🎛 Handle Playback Speed Selection in `pattern_edit` Mode
     if current_screen == screen_mode.pattern_edit then
         handle_pattern_playback_speed(x, y, z)
         return
@@ -733,9 +702,6 @@ grid = function(x, y, z)
         handle_note_generation(x, y, z)
     end
 
-
-
-
     grid_refresh()
 end
 
@@ -744,37 +710,34 @@ end
 -- // METRO CALLBACK \\
 function metro(index, stage)
     if index == 2 then
-        global_time = global_time + 0.01 -- Increment time in seconds
+        global_time = global_time + 0.01
 
         for rec_index, recorder in ipairs(recorders) do
             if recorder.playback_active and recorder.playback_index <= #recorder.recording then
                 local event = recorder.recording[recorder.playback_index]
 
-                -- ✅ Scale event timing using playback speed
                 local speed_factor = 1 / recorder.playback_speed
                 if global_time >= event.time * speed_factor + recorder.record_start_time then
-                    -- Turn off the previous note before playing the next
                     if recorder.playback_index > 1 then
                         local prev_event = recorder.recording[recorder.playback_index - 1]
                         send_note_off(prev_event.channel, prev_event.x + prev_event.y * 5 + 50)
                     end
 
-                    -- Play the next note
                     handle_note_generation(event.x, event.y, event.z, event.channel)
 
-                    -- Prevent LED updates in edit and pattern edit mode
                     if current_screen == screen_mode.play and not current_screen == screen_mode.pattern_edit then
                         if event.channel == midichannel then
-                            grid_led(event.x, event.y, event.z * 15) -- Full brightness for active channel
+                            -- Full brightness for the current channel
+                            grid_led(event.x, event.y, event.z * 15)
                         else
-                            grid_led(event.x, event.y, event.z * 1)  -- Dim for other channels
+                            -- Dim brightness for other channels
+                            grid_led(event.x, event.y, event.z * 1)
                         end
                     end
 
 
                     recorder.playback_index = recorder.playback_index + 1
 
-                    -- ✅ If the playback reaches the end, loop it back
                     if recorder.playback_index > #recorder.recording then
                         recorder.playback_index = 1
                         recorder.record_start_time = global_time
@@ -792,12 +755,12 @@ function metro(index, stage)
 end
 
 function start_global_timer()
-    metro_set(2, 10, -1) -- Update every 10ms
+    metro_set(2, 10, -1)
     print("Global timer started")
 end
 
 function stop_global_timer()
-    metro_set(2, 0) -- Stop the timer
+    metro_set(2, 0)
     print("Global timer stopped")
 end
 
@@ -821,7 +784,7 @@ function clear_all_held_notes()
             send_note_off(channel, note)
         end
     end
-    held_notes = {} -- ✅ Reset the held notes table after turning them off
+    held_notes = {}
 end
 
 function send_note_off(channel, note)
@@ -836,7 +799,6 @@ function send_note_off(channel, note)
     end
 end
 
--- clear all LEDs between 3 and 15
 function clear_section_leds()
     for y = 3, 15 do
         for x = 1, 16 do
@@ -902,17 +864,15 @@ function initialize_grid()
     for y = 1, 2 do
         for x = 9, 12 do
             local index = (y - 1) * 4 + (x - 7)
-            grid_led(x, y, 1) -- ✅ Set inactive recorders to same level as Shift + Press
+            grid_led(x, y, 1)
         end
     end
 
 
-    -- ✅ Update Channel Edit Mode Toggle Button
     grid_led(15, 1, current_screen == screen_mode.channel_edit and 15 or 5)
 
     grid_led(14, 1, current_screen == screen_mode.pattern_edit and 10 or 1)
 
-    -- ✅ Update Shift Button
     grid_led(16, 1, shift == 1 and 15 or 3)
 
     grid_refresh()
