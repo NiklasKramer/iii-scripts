@@ -71,7 +71,8 @@ end
 m = metro.new(tick, 33)
 
 function arc(n, d)
-    sp[n] = clamp(sp[n] + d, -32, 32)
+    local sensitivity = 0.10
+    sp[n] = clamp(sp[n] + d * sensitivity, -32, 32)
 end
 
 function arc_key(z)
@@ -79,7 +80,8 @@ function arc_key(z)
 end
 
 function point(n, x)
-    local c = x >> 4
+    x = math.floor(x)
+    local c = math.floor(x / 16)
     arc_led_rel(n, c % 64 + 1, 15)
     arc_led_rel(n, (c + 1) % 64 + 1, x % 16)
     arc_led_rel(n, (c + 63) % 64 + 1, 15 - (x % 16))
