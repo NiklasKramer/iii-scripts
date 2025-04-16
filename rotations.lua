@@ -1,4 +1,5 @@
 print("rotations is based on snow")
+
 note = {}
 note[1] = { 45, 43, nil, 50 }
 note[2] = { 55, 64 }
@@ -12,6 +13,7 @@ sp = { 0, 0, 0, 0 }
 last_led_step = { 0, 0, 0, 0 }
 
 local MIDI_VELOCITY = 75
+local ARC_SENSITIVITY = 0.10
 
 local function play_note(note_val, ch)
     midi_note_on(note_val, MIDI_VELOCITY, ch)
@@ -71,8 +73,7 @@ end
 m = metro.new(tick, 33)
 
 function arc(n, d)
-    local sensitivity = 0.10
-    sp[n] = clamp(sp[n] + d * sensitivity, -32, 32)
+    sp[n] = clamp(sp[n] + d * ARC_SENSITIVITY, -32, 32)
 end
 
 function arc_key(z)
