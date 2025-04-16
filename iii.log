@@ -1,29 +1,11 @@
-2025-02-07 17:26:54,068 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodemm23673631
-2025-02-07 17:26:59,870 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 17:27:37,816 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 22:15:15,702 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 22:15:35,936 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 22:16:42,124 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 22:17:50,654 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 22:21:03,427 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 22:24:12,407 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 22:27:04,593 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 22:31:29,574 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 22:36:35,639 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 22:39:05,330 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 22:40:25,600 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 22:41:14,630 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 22:44:08,733 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 22:45:45,133 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 22:50:04,790 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 22:53:20,336 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 22:58:31,490 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 22:59:35,761 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 23:07:53,534 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 23:11:29,962 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 23:13:33,261 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 23:15:44,440 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 23:17:26,517 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 23:20:28,147 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 23:23:19,246 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
-2025-02-07 23:27:22,907 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='es2.lua' mode='r' encoding='UTF-8'>
+2025-04-16 21:54:43,975 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
+2025-04-16 21:55:01,746 diii.iii        ERROR   MainProcess lost connection: read failed: [Errno 6] Device not configured
+2025-04-16 21:55:03,930 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
+2025-04-16 21:55:28,869 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='snow.lua' mode='r' encoding='UTF-8'>
+2025-04-16 21:56:34,529 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='snow.lua' mode='r' encoding='UTF-8'>
+2025-04-16 21:58:52,610 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='snow.lua' mode='r' encoding='UTF-8'>
+2025-04-16 22:01:01,971 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='snow.lua' mode='r' encoding='UTF-8'>
+2025-04-16 22:01:08,220 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='snow.lua' mode='r' encoding='UTF-8'>
+2025-04-16 22:02:41,330 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='snow.lua' mode='r' encoding='UTF-8'>
+2025-04-16 22:05:07,101 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='snow.lua' mode='r' encoding='UTF-8'>
+2025-04-16 22:06:25,160 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='snow.lua' mode='r' encoding='UTF-8'>
