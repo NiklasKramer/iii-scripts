@@ -1,10 +1,20 @@
 print("rotations is based on snow")
 
+local base_scale = { 0, 2, 4, 7, 9, 11 }
+local scale = {}
+for i = 0, 7 do
+    for _, v in ipairs(base_scale) do
+        table.insert(scale, v + 12 * i)
+    end
+end
+local key1_held = false
+local key1_press_time = 0
+
 note = {}
-note[1] = { 45, 43, nil, 50 }
-note[2] = { 55, 64 }
-note[3] = { 69, 74, 76, 79 }
-note[4] = { 86, 83, 81, 72, 79 }
+note[1] = { 1, 2, nil, 4 }
+note[2] = { 3, 5 }
+note[3] = { 6, 1, 2, 3 }
+note[4] = { 4, 2, 5, 6, 1 }
 
 seq = { 1, 1, 1, 1 }
 
@@ -15,12 +25,50 @@ last_led_step = { 0, 0, 0, 0 }
 local MIDI_VELOCITY = 75
 local ARC_SENSITIVITY = 0.10
 
+local function random_pattern(range, d)
+    local max_steps = 32
+    local min_steps = 4
+    local scaled_d = d * 0.2
+    local steps = clamp(math.floor(8 + scaled_d * 2), min_steps, max_steps)
+    local nil_chance = clamp(0.2 + (-scaled_d * 0.05), 0.2, 0.8)
+    local pattern = {}
+    local last_note = nil
+    for i = 1, steps do
+        if math.random() < nil_chance then
+            pattern[i] = nil
+        else
+            local note
+            repeat
+                note = math.random(range[1], range[2])
+            until note ~= last_note
+            pattern[i] = note
+            last_note = note
+        end
+    end
+    return pattern
+end
+
 local function play_note(note_val, ch)
-    midi_note_on(note_val, MIDI_VELOCITY, ch)
+    if note_val ~= nil then
+        local scale_note = scale[note_val]
+        if scale_note == nil then
+            -- clamp to the closest index in scale
+            local clamped_index = math.max(1, math.min(note_val, #scale))
+            scale_note = scale[clamped_index]
+        end
+        midi_note_on(24 + scale_note, MIDI_VELOCITY, ch)
+    end
 end
 
 local function stop_note(note_val, ch)
-    midi_note_off(note_val, MIDI_VELOCITY, ch)
+    if note_val ~= nil then
+        local scale_note = scale[note_val]
+        if scale_note == nil then
+            local clamped_index = math.max(1, math.min(note_val, #scale))
+            scale_note = scale[clamped_index]
+        end
+        midi_note_off(24 + scale_note, MIDI_VELOCITY, ch)
+    end
 end
 
 local function draw_arc_notes(n)
@@ -73,11 +121,34 @@ end
 m = metro.new(tick, 33)
 
 function arc(n, d)
-    sp[n] = clamp(sp[n] + d * ARC_SENSITIVITY, -32, 32)
+    if key1_held then
+        local ranges = {
+            { 1,  11 }, -- bass
+            { 12, 23 }, -- low mids
+            { 24, 35 }, -- mids
+            { 36, 47 }, -- highs
+        }
+        note[n] = random_pattern(ranges[n], d)
+    else
+        sp[n] = clamp(sp[n] + d * ARC_SENSITIVITY, -32, 32)
+    end
 end
 
 function arc_key(z)
-    for n = 1, 4 do sp[n] = 0 end
+    time = get_time()
+    print(time)
+    if z == 1 then
+        key1_held = true
+        key1_press_time = get_time()
+    else
+        print("else")
+        key1_held = false
+
+        if get_time() - key1_press_time < 250 then
+            print('quicktime')
+            for n = 1, 4 do sp[n] = 0 end
+        end
+    end
 end
 
 function point(n, x)
