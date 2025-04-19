@@ -3,10 +3,30 @@ local screen_index = 1
 arc_sensitivity = 3
 
 local cc_map = {
-    { 100, 101, 102, 103 },
-    { 104, 105, 106, 107 },
-    { 108, 109, 110, 111 },
-    { 112, 113, 114, 115 }
+    {
+        { cc = 7, ch = 1, min = 0, max = 127 },
+        { cc = 7, ch = 2, min = 0, max = 127 },
+        { cc = 7, ch = 3, min = 0, max = 127 },
+        { cc = 7, ch = 4, min = 0, max = 127 }
+    },
+    {
+        { cc = 7, ch = 5, min = 0, max = 127 },
+        { cc = 7, ch = 6, min = 0, max = 127 },
+        { cc = 7, ch = 7, min = 0, max = 127 },
+        { cc = 7, ch = 8, min = 0, max = 127 }
+    },
+    {
+        { cc = 108, ch = 1, min = 0, max = 127 },
+        { cc = 109, ch = 1, min = 0, max = 127 },
+        { cc = 110, ch = 1, min = 0, max = 127 },
+        { cc = 111, ch = 1, min = 0, max = 127 }
+    },
+    {
+        { cc = 112, ch = 1, min = 0, max = 127 },
+        { cc = 113, ch = 1, min = 0, max = 127 },
+        { cc = 114, ch = 1, min = 0, max = 127 },
+        { cc = 115, ch = 1, min = 0, max = 127 }
+    }
 }
 local values = {
     { 0, 0, 0, 0 },
@@ -19,18 +39,20 @@ local m = metro.new(function()
     for n = 1, 4 do
         arc_redraw(n)
     end
-end, 33)
+end, 30)
 
 function arc(n, d)
-    values[screen_index][n] = clamp(values[screen_index][n] + d, 0, 127)
-    midi_cc(cc_map[screen_index][n], values[screen_index][n], 1)
+    local config = cc_map[screen_index][n]
+    values[screen_index][n] = clamp(values[screen_index][n] + d, config.min, config.max)
+    midi_cc(config.cc, values[screen_index][n], config.ch)
 end
 
 function midi_rx(ch, status, data1, data2)
     if status == 176 then -- CC message
         for i = 1, 4 do
-            if data1 == cc_map[screen_index][i] then
-                values[screen_index][i] = clamp(data2, 0, 127)
+            local config = cc_map[screen_index][i]
+            if data1 == config.cc and ch == config.ch then
+                values[screen_index][i] = clamp(data2, config.min, config.max)
             end
         end
     end
