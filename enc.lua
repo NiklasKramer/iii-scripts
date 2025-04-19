@@ -1,6 +1,27 @@
 local screen_index = 1
 
-arc_sensitivity = 3
+local arc_sensitivity = 3
+local key1_held = false
+local key1_time = 0
+local pattern_touched = {
+    { false, false, false, false },
+    { false, false, false, false },
+    { false, false, false, false },
+    { false, false, false, false }
+}
+local patterns = {}
+
+for s = 1, 4 do
+    patterns[s] = {}
+    for n = 1, 4 do
+        patterns[s][n] = {
+            recording = false,
+            playing = false,
+            data = {},
+            index = 1
+        }
+    end
+end
 
 local cc_map = {
     {
@@ -35,16 +56,32 @@ local values = {
     { 0, 0, 0, 0 }
 }
 
-local m = metro.new(function()
-    for n = 1, 4 do
-        arc_redraw(n)
-    end
-end, 30)
-
 function arc(n, d)
     local config = cc_map[screen_index][n]
-    values[screen_index][n] = clamp(values[screen_index][n] + d, config.min, config.max)
-    midi_cc(config.cc, values[screen_index][n], config.ch)
+    local pat = patterns[screen_index][n]
+
+    if key1_held and not pattern_touched[screen_index][n] then
+        if pat.playing or #pat.data > 0 then
+            pat.data = {}
+            pat.playing = false
+            pat.index = 1
+            print("cleared pattern " .. n)
+        else
+            pat.recording = true
+            pat.data = {}
+            pat.index = 1
+            print("recording pattern " .. n)
+        end
+        pattern_touched[screen_index][n] = true
+    end
+
+    local target = clamp(values[screen_index][n] + d, config.min, config.max)
+    values[screen_index][n] = target
+    midi_cc(config.cc, target, config.ch)
+
+    if pat.recording then
+        pat.data[#pat.data + 1] = target
+    end
 end
 
 function midi_rx(ch, status, data1, data2)
@@ -82,13 +119,62 @@ function arc_redraw(n)
     end
 end
 
-function arc_key(k, z)
-    if k == 1 then
-        screen_index = (screen_index % 4) + 1
-        print('')
+function arc_key(z)
+    print(ps(z))
+    if z == 1 then
+        key1_held = true
+        key1_time = get_time()
+        print("KEY 1 PRESSED at " .. key1_time)
+    else
+        key1_held = false
+        local release_time = get_time()
+        print("KEY 1 RELEASED at " .. release_time)
+        for i = 1, 4 do
+            pattern_touched[screen_index][i] = false
+        end
+        if release_time - key1_time < 500 then
+            screen_index = (screen_index % 4) + 1
+            print("SWITCHED TO SCREEN " .. screen_index)
+        end
+        -- stop recording
+        for n = 1, 4 do
+            local pat = patterns[screen_index][n]
+            if pat.recording then
+                pat.recording = false
+                pat.playing = true
+                pat.index = 1
+                print("PLAYING PATTERN " .. n)
+            end
+        end
     end
 end
 
 for i = 1, 4 do
     arc_res(i, arc_sensitivity)
 end
+
+metro.new(function()
+    for n = 1, 4 do
+        arc_redraw(n)
+    end
+end, 33)
+
+metro.new(function()
+    for n = 1, 4 do
+        local pat = patterns[screen_index][n]
+
+        -- playback logic
+        if pat.playing and #pat.data > 0 then
+            values[screen_index][n] = pat.data[pat.index]
+            local config = cc_map[screen_index][n]
+            midi_cc(config.cc, values[screen_index][n], config.ch)
+            pat.index = (pat.index % #pat.data) + 1
+        end
+
+        -- recording logic: duplicate the most recent value if actively recording
+        if pat.recording then
+            local current_value = values[screen_index][n]
+            pat.data[#pat.data + 1] = current_value
+        end
+    end
+end, 5)
