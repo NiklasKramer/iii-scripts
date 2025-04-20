@@ -1,28 +1,4 @@
-local screen_index = 1
-
 local arc_sensitivity = 3
-local key1_held = false
-local key1_time = 0
-local pattern_touched = {
-    { false, false, false, false },
-    { false, false, false, false },
-    { false, false, false, false },
-    { false, false, false, false }
-}
-local patterns = {}
-
-for s = 1, 4 do
-    patterns[s] = {}
-    for n = 1, 4 do
-        patterns[s][n] = {
-            recording = false,
-            playing = false,
-            data = {},
-            index = 1
-        }
-    end
-end
-
 local cc_map = {
     {
         { cc = 7, ch = 1, min = 0, max = 127 },
@@ -49,6 +25,60 @@ local cc_map = {
         { cc = 115, ch = 1, min = 0, max = 127 }
     }
 }
+
+local screen_index = 1
+local key1_held = false
+local key1_time = 0
+local pattern_touched = {
+    { false, false, false, false },
+    { false, false, false, false },
+    { false, false, false, false },
+    { false, false, false, false }
+}
+local patterns = {}
+
+local function record_step(pat, value)
+    local now = get_time()
+    table.insert(pat.data, {
+        value = value,
+        time = now - pat.start_time
+    })
+end
+
+local function play_pattern_step(pat, n, values, cc_map)
+    local now = get_time()
+    while true do
+        local step = pat.data[pat.index]
+        if not step or type(step) ~= "table" then break end
+        if now - pat.play_start_time >= step.time then
+            values[screen_index][n] = step.value
+            local config = cc_map[screen_index][n]
+            midi_cc(config.cc, step.value, config.ch)
+            pat.index = pat.index + 1
+            if pat.index > #pat.data then
+                pat.index = 1
+                pat.play_start_time = get_time()
+                break
+            end
+        else
+            break
+        end
+    end
+end
+
+for s = 1, 4 do
+    patterns[s] = {}
+    for n = 1, 4 do
+        patterns[s][n] = {
+            recording = false,
+            playing = false,
+            data = {},
+            index = 1
+        }
+    end
+end
+
+
 local values = {
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -91,7 +121,7 @@ function arc(n, d)
 end
 
 function midi_rx(ch, status, data1, data2)
-    if status == 176 then -- CC message
+    if status == 176 then
         for i = 1, 4 do
             local config = cc_map[screen_index][i]
             if data1 == config.cc and ch == config.ch then
@@ -171,35 +201,13 @@ metro.new(function()
         local pat = patterns[screen_index][n]
 
         -- playback logic
-        local now = get_time()
         if pat.playing and pat.play_start_time then
-            while true do
-                local step = pat.data[pat.index]
-                if not step or type(step) ~= "table" then break end
-                if now - pat.play_start_time >= step.time then
-                    values[screen_index][n] = step.value
-                    local config = cc_map[screen_index][n]
-                    midi_cc(config.cc, step.value, config.ch)
-                    pat.index = pat.index + 1
-                    if pat.index > #pat.data then
-                        pat.index = 1
-                        pat.play_start_time = get_time()
-                        break
-                    end
-                else
-                    break
-                end
-            end
+            play_pattern_step(pat, n, values, cc_map)
         end
 
         -- recording logic: unconditionally record while pattern is active
         if pat.recording then
-            local now = get_time()
-            local current_value = values[screen_index][n]
-            pat.data[#pat.data + 1] = {
-                value = current_value,
-                time = now - pat.start_time
-            }
+            record_step(pat, values[screen_index][n])
         end
     end
 end, 33)
