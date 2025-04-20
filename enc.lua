@@ -1,3 +1,16 @@
+--[[
+    iii arc pattern looper
+
+    sends midi cc via arc, records encoder gestures.
+    hold key 1 + turn = record or clear pattern
+    tap key 1 = switch screen
+    each screen = 4 encoders, each with own pattern
+
+    you can tweak cc_map to your own channels / ccs
+
+    built for iii + arc by n kramer
+]]
+
 local arc_sensitivity = 3
 local cc_map = {
     {
