@@ -65,9 +65,12 @@ function arc(n, d)
             pat.data = {}
             pat.playing = false
             pat.index = 1
+            pat.start_time = nil
+            pat.play_start_time = nil
             print("cleared pattern " .. n)
         else
             pat.recording = true
+            pat.start_time = get_time()
             pat.data = {}
             pat.index = 1
             print("recording pattern " .. n)
@@ -80,7 +83,10 @@ function arc(n, d)
     midi_cc(config.cc, target, config.ch)
 
     if pat.recording then
-        pat.data[#pat.data + 1] = target
+        table.insert(pat.data, {
+            value = target,
+            time = get_time() - pat.start_time
+        })
     end
 end
 
@@ -141,6 +147,7 @@ function arc_key(z)
             local pat = patterns[screen_index][n]
             if pat.recording then
                 pat.recording = false
+                pat.play_start_time = get_time()
                 pat.playing = true
                 pat.index = 1
                 print("PLAYING PATTERN " .. n)
@@ -164,17 +171,35 @@ metro.new(function()
         local pat = patterns[screen_index][n]
 
         -- playback logic
-        if pat.playing and #pat.data > 0 then
-            values[screen_index][n] = pat.data[pat.index]
-            local config = cc_map[screen_index][n]
-            midi_cc(config.cc, values[screen_index][n], config.ch)
-            pat.index = (pat.index % #pat.data) + 1
+        local now = get_time()
+        if pat.playing and pat.play_start_time then
+            while true do
+                local step = pat.data[pat.index]
+                if not step or type(step) ~= "table" then break end
+                if now - pat.play_start_time >= step.time then
+                    values[screen_index][n] = step.value
+                    local config = cc_map[screen_index][n]
+                    midi_cc(config.cc, step.value, config.ch)
+                    pat.index = pat.index + 1
+                    if pat.index > #pat.data then
+                        pat.index = 1
+                        pat.play_start_time = get_time()
+                        break
+                    end
+                else
+                    break
+                end
+            end
         end
 
-        -- recording logic: duplicate the most recent value if actively recording
+        -- recording logic: unconditionally record while pattern is active
         if pat.recording then
+            local now = get_time()
             local current_value = values[screen_index][n]
-            pat.data[#pat.data + 1] = current_value
+            pat.data[#pat.data + 1] = {
+                value = current_value,
+                time = now - pat.start_time
+            }
         end
     end
-end, 5)
+end, 33)
