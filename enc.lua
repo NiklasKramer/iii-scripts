@@ -40,13 +40,6 @@ local cc_map = {
     }
 }
 
-local last_drawn_values = {
-    { -1, -1, -1, -1 },
-    { -1, -1, -1, -1 },
-    { -1, -1, -1, -1 },
-    { -1, -1, -1, -1 }
-}
-
 local screen_index = 1
 local key1_held = false
 local key1_time = 0
@@ -57,6 +50,7 @@ local pattern_touched = {
     { false, false, false, false }
 }
 local patterns = {}
+
 
 local function record_step(pat, value)
     if not pat or not pat.data or not pat.start_time then return end
@@ -75,52 +69,17 @@ local function record_step(pat, value)
     end
 end
 
-local function reset_pattern(pat, n)
-    pat.data = {}
-    pat.playing = false
-    pat.index = 1
-    pat.start_time = nil
-    pat.play_start_time = nil
-    print("cleared pattern " .. n)
-end
-
-local function start_recording(pat, n)
-    pat.recording = true
-    pat.start_time = get_time()
-    pat.data = {}
-    pat.index = 1
-    print("recording pattern " .. n)
-end
-
-local function finalize_recording(pat, n, final_value)
-    pat.recording = false
-    local now = get_time()
-    local duration = now - pat.start_time
-    local last_step = pat.data[#pat.data]
-    if not last_step or last_step.time < duration then
-        table.insert(pat.data, {
-            value = final_value,
-            time = duration
-        })
-    end
-    pat.play_start_time = now
-    pat.playing = true
-    pat.index = 1
-    print("PLAYING PATTERN " .. n)
-end
-
 local function play_pattern_step(pat, n, values, cc_map)
     if not pat or not pat.data or not pat.play_start_time or not pat.index or not values[screen_index] then return end
     local now = get_time()
     while true do
-        local idx = pat.index
-        local step = pat.data[idx]
-        if type(step) ~= "table" then break end
+        local step = pat.data[pat.index]
+        if not step or type(step) ~= "table" then break end
         if now - pat.play_start_time >= step.time then
             values[screen_index][n] = step.value
             local config = cc_map[screen_index][n]
             midi_cc(config.cc, step.value, config.ch)
-            pat.index = idx + 1
+            pat.index = pat.index + 1
             if pat.index > #pat.data then
                 pat.index = 1
                 pat.play_start_time = get_time()
@@ -144,6 +103,7 @@ for s = 1, 4 do
     end
 end
 
+
 local values = {
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -160,9 +120,18 @@ function arc(n, d)
 
     if key1_held and not pattern_touched[screen_index][n] then
         if pat.playing or #pat.data > 0 then
-            reset_pattern(pat, n)
+            pat.data = {}
+            pat.playing = false
+            pat.index = 1
+            pat.start_time = nil
+            pat.play_start_time = nil
+            print("cleared pattern " .. n)
         else
-            start_recording(pat, n)
+            pat.recording = true
+            pat.start_time = get_time()
+            pat.data = {}
+            pat.index = 1
+            print("recording pattern " .. n)
         end
         pattern_touched[screen_index][n] = true
     end
@@ -197,9 +166,6 @@ function midi_rx(ch, status, data1, data2)
 end
 
 function arc_redraw(n)
-    if last_drawn_values[screen_index][n] == values[screen_index][n] then return end
-    last_drawn_values[screen_index][n] = values[screen_index][n]
-
     arc_led_all(n, 0)
     local start_led = 44
     local end_led = 21
@@ -233,7 +199,9 @@ function arc_key(z)
         key1_held = false
         local release_time = get_time()
         print("KEY 1 RELEASED at " .. release_time)
-        for i = 1, 4 do pattern_touched[screen_index][i] = false end
+        for i = 1, 4 do
+            pattern_touched[screen_index][i] = false
+        end
         if release_time - key1_time < 500 then
             screen_index = (screen_index % 4) + 1
             print("SWITCHED TO SCREEN " .. screen_index)
@@ -243,7 +211,21 @@ function arc_key(z)
             if patterns[screen_index] and patterns[screen_index][n] and values[screen_index] and values[screen_index][n] then
                 local pat = patterns[screen_index][n]
                 if pat.recording then
-                    finalize_recording(pat, n, values[screen_index][n])
+                    pat.recording = false
+                    -- Ensure silence tail is preserved
+                    local now = get_time()
+                    local duration = now - pat.start_time
+                    local last_step = pat.data[#pat.data]
+                    if not last_step or last_step.time < duration then
+                        table.insert(pat.data, {
+                            value = values[screen_index][n], -- current value
+                            time = duration
+                        })
+                    end
+                    pat.play_start_time = get_time()
+                    pat.playing = true
+                    pat.index = 1
+                    print("PLAYING PATTERN " .. n)
                 end
             end
         end
@@ -255,28 +237,24 @@ for i = 1, 4 do
 end
 
 metro.new(function()
-    for s = 1, 4 do
-        if values[s] then
-            arc_redraw(s)
-        end
+    for n = 1, 4 do
+        if values[screen_index] then arc_redraw(n) end
     end
 end, 33)
 
 metro.new(function()
-    for s = 1, 4 do
-        if patterns[s] and values[s] then
-            for n = 1, 4 do
-                local pat = patterns[s][n]
+    for n = 1, 4 do
+        if patterns[screen_index] and patterns[screen_index][n] and values[screen_index] then
+            local pat = patterns[screen_index][n]
 
-                -- playback logic
-                if pat.playing and pat.play_start_time then
-                    play_pattern_step(pat, n, values, cc_map)
-                end
+            -- playback logic
+            if pat.playing and pat.play_start_time then
+                play_pattern_step(pat, n, values, cc_map)
+            end
 
-                -- recording logic: unconditionally record while pattern is active
-                if pat.recording then
-                    record_step(pat, values[s][n])
-                end
+            -- recording logic: unconditionally record while pattern is active
+            if pat.recording then
+                record_step(pat, values[screen_index][n])
             end
         end
     end
