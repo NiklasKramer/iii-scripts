@@ -15,6 +15,8 @@ local EDIT_MODE = {
 local key1_held = false
 local key1_time = 0
 local edit_mode = EDIT_MODE.scan
+local manual_scan = false
+local manual_toggle_direction = 0
 
 local c = {}
 for i = 1, 4 do
@@ -67,11 +69,8 @@ local function handle_key_release()
         local handler = edit_mode_key_handlers and edit_mode_key_handlers[edit_mode]
         if handler then handler() end
 
-        -- Clear all arc LEDs when switching back to scan/manual mode
         if edit_mode == EDIT_MODE.scan then
-            for i = 1, 4 do
-                arc_led_all(i, 0)
-            end
+            redraw_all_arcs()
         end
     end
     key1_held = false
@@ -88,12 +87,30 @@ end
 -- Mode handling
 
 local function handle_scan_mode(n, d)
-    if n ~= 1 and n ~= 2 then return end
-
     if n == 1 then
-        c[1].speed = clamp(c[1].speed + d * 0.1, -20, 20)
-    elseif n == 2 then
-        c[1].value = clamp(c[1].value + d, 0, 127)
+        if manual_scan then
+            c[1].value = (c[1].value + d) % 128
+            local pan_vals = get_quad_panning_values(c[1].value)
+            send_quad_midi(pan_vals)
+            arc_redraw(1)
+        else
+            c[1].speed = clamp(c[1].speed + d * 0.1, -20, 20)
+        end
+    elseif n == 4 then
+        local dir = d > 0 and 1 or -1
+
+        if manual_toggle_direction ~= dir then
+            manual_toggle_direction = dir
+            manual_toggle_counter = 0
+        end
+
+        manual_toggle_counter = manual_toggle_counter + d
+
+        if math.abs(manual_toggle_counter) >= 20 then
+            manual_scan = not manual_scan
+            manual_toggle_counter = 0
+            arc_redraw(4)
+        end
     end
 end
 
@@ -152,12 +169,23 @@ local function draw_gradient_leds(n, value)
 end
 
 
-local arc_draw_modes = {
-    [EDIT_MODE.scan] = function(n)
-        if n == 1 then
-            draw_gradient_leds(n, c[n].value)
+local function draw_scan_mode(n)
+    if n == 1 then
+        draw_gradient_leds(n, c[n].value)
+    elseif n == 4 then
+        local left_start = 20
+        local right_start = 44
+        for i = 0, 8 do
+            local left_pos = (left_start + i) % 64
+            local right_pos = (right_start + i) % 64
+            arc_led(n, left_pos + 1, manual_scan and 10 or 2)
+            arc_led(n, right_pos + 1, manual_scan and 2 or 10)
         end
-    end,
+    end
+end
+
+local arc_draw_modes = {
+    [EDIT_MODE.scan] = draw_scan_mode,
     [EDIT_MODE.single] = function(n)
         draw_range_leds(n, c[n].min, c[n].max, (c[n].value / 127) * 64)
     end,
@@ -186,13 +214,18 @@ function redraw_all_arcs()
 end
 
 function redraw_arc_scan()
-    for n = 1, 4 do
-        if c[n].speed ~= 0 then
-            c[n].value = (c[n].value + c[n].speed) % 128
-            local pan_vals = get_quad_panning_values(c[n].value)
-            send_quad_midi(pan_vals)
-            arc_redraw(n)
+    if not manual_scan then
+        for n = 1, 4 do
+            if c[n].speed ~= 0 then
+                c[n].value = (c[n].value + c[n].speed) % 128
+                local pan_vals = get_quad_panning_values(c[n].value)
+                send_quad_midi(pan_vals)
+                arc_redraw(n)
+            end
         end
+    else
+        arc_redraw(1)
+        arc_redraw(4)
     end
 end
 
