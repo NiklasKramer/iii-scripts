@@ -1,24 +1,31 @@
 --[[
     iii arc scanner
-
     built for iii + arc by n kramer
 ]]
-local arc_sensitivity = 8
-local speed = { 0 }
-local cc_map = {
-    {
-        { cc = 7, ch = 1, min = 0, max = 127 },
-        { cc = 7, ch = 2, min = 0, max = 127 },
-        { cc = 7, ch = 3, min = 0, max = 127 },
-        { cc = 7, ch = 4, min = 0, max = 127 },
 
-    },
+local arc_sensitivity = 2
+
+local EDIT_MODE = {
+    scan = 0,
+    single = 1,
+    set_min = 2,
+    set_max = 3
 }
 
 local key1_held = false
-local pattern_touched = { false }
-local patterns = {}
-local values = { 0 }
+local key1_time = 0
+local edit_mode = EDIT_MODE.scan
+
+local c = {}
+for i = 1, 4 do
+    c[i] = { cc = 7, ch = i, min = 0, max = 127, value = 64, speed = 0 }
+end
+
+for i = 1, 4 do
+    arc_res(i, arc_sensitivity)
+end
+
+-- Utility functions
 
 local function get_quad_panning_values(pos)
     local segment = 127 / 4
@@ -33,133 +40,172 @@ local function get_quad_panning_values(pos)
     return values
 end
 
-local function record_step(pat, value, limit, now)
-    if not pat or not pat.data or not pat.start_time then return end
-    if #pat.data < limit then
-        table.insert(pat.data, {
-            value = value,
-            time = now - pat.start_time
-        })
-    else
-        pat.recording = false
-        pat.playing = true
-        pat.play_start_time = get_time()
-        pat.index = 1
-        print("AUTO STOPPED RECORDING at " .. limit .. " steps")
+local function send_quad_midi(pan_vals)
+    for i = 1, 4 do
+        local mapped_value = c[i].min + (pan_vals[i] / 127) * (c[i].max - c[i].min)
+        mapped_value = math.floor(clamp(mapped_value, c[i].min, c[i].max))
+        midi_cc(c[i].cc, mapped_value, c[i].ch)
     end
 end
 
-local function play_step(pat, n, values, now)
-    if not pat or not pat.data or not pat.play_start_time or not pat.index or not values[n] then return end
-    while true do
-        local step = pat.data[pat.index]
-        if not step or type(step) ~= "table" then break end
-        if now - pat.play_start_time >= step.time then
-            values[n] = step.value
-            local config = cc_map[n]
-            midi_cc(config[1].cc, step.value, config[1].ch)
-            pat.index = pat.index + 1
-            if pat.index > #pat.data then
-                pat.index = 1
-                pat.play_start_time = get_time()
-                break
+local function send_single_midi(n)
+    midi_cc(c[n].cc, c[n].value, c[n].ch)
+end
+
+
+-- Key interaction handlers
+
+local function handle_key_press()
+    key1_held = true
+    key1_time = get_time()
+end
+
+local function handle_key_release()
+    local release_time = get_time()
+    if release_time - key1_time < 500 then
+        edit_mode = (edit_mode + 1) % (EDIT_MODE.set_max + 1)
+        local handler = edit_mode_key_handlers and edit_mode_key_handlers[edit_mode]
+        if handler then handler() end
+
+        -- Clear all arc LEDs when switching back to scan/manual mode
+        if edit_mode == EDIT_MODE.scan then
+            for i = 1, 4 do
+                arc_led_all(i, 0)
             end
-        else
-            break
         end
     end
+    key1_held = false
 end
 
-for n = 1, 1 do
-    patterns[n] = {
-        recording = false,
-        playing = false,
-        data = {},
-        index = 1
-    }
+function arc_key(z)
+    if z == 1 then
+        handle_key_press()
+    else
+        handle_key_release()
+    end
 end
+
+-- Mode handling
+
+local function handle_scan_mode(n, d)
+    if n ~= 1 and n ~= 2 then return end
+
+    if n == 1 then
+        c[1].speed = clamp(c[1].speed + d * 0.1, -20, 20)
+    elseif n == 2 then
+        c[1].value = clamp(c[1].value + d, 0, 127)
+    end
+end
+
+local function handle_set_min(n, d)
+    c[n].min = clamp(c[n].min + d, 0, c[n].max)
+end
+
+local function handle_set_max(n, d)
+    c[n].max = clamp(c[n].max + d, c[n].min, 127)
+end
+
+local function handle_edit_mode(n, d)
+    if edit_mode == EDIT_MODE.scan then
+        handle_scan_mode(n, d)
+    elseif edit_mode == EDIT_MODE.single then
+        c[n].value = clamp(c[n].value + d, c[n].min, c[n].max)
+        send_single_midi(n)
+    elseif edit_mode == EDIT_MODE.set_min then
+        handle_set_min(n, d)
+    elseif edit_mode == EDIT_MODE.set_max then
+        handle_set_max(n, d)
+    end
+end
+
+-- Arc input
 
 function arc(n, d)
-    if n ~= 1 then return end
-    if not cc_map[n] then return end
-    if not patterns[n] then return end
-    if not values[n] then return end
-    local config = cc_map[n]
-    local pat = patterns[n]
-
-    if key1_held and not pattern_touched[n] then
-        if pat.playing or #pat.data > 0 then
-            pat.data = {}
-            pat.playing = false
-            pat.index = 1
-            pat.start_time = nil
-            pat.play_start_time = nil
-            print("cleared pattern " .. n)
-        else
-            pat.recording = true
-            pat.start_time = get_time()
-            pat.data = {}
-            pat.index = 1
-            print("recording pattern " .. n)
-        end
-        pattern_touched[n] = true
+    if key1_held and n == 1 then
+        c[1].speed = 0
+        return
     end
 
-    speed[n] = clamp(speed[n] + d * 0.1, -5, 5)
-
-    if pat.recording then
-        local now = get_time()
-        local last_step = pat.data[#pat.data]
-        if not last_step or math.abs(values[n] - last_step.value) > 2 or now - pat.start_time - last_step.time > 100 then
-            table.insert(pat.data, {
-                value = values[n],
-                time = now - pat.start_time
-            })
-        end
-    end
+    handle_edit_mode(n, d)
 end
 
-function arc_redraw(n)
-    arc_led_all(n, 0)
-    local pos = (math.floor((values[n] / 127) * 64) % 64)
+-- Drawing functions
+local function draw_range_leds(n, min_val, max_val, highlight_pos)
+    local min_pos = (min_val / 127) * 64
+    local max_pos = (max_val / 127) * 64
+    for i = math.floor(min_pos), math.floor(max_pos) do
+        local led_pos = (i % 64) + 1
+        arc_led(n, led_pos, 2)
+    end
+    local highlight_led = (math.floor(highlight_pos) % 64) + 1
+    arc_led(n, highlight_led, 10)
+end
+
+
+local function draw_gradient_leds(n, value)
+    local pos = (math.floor((value / 127) * 64) % 64)
     for i = -3, 3 do
         local led_pos = ((pos + i) % 64) + 1
         local brightness = math.max(0, 15 - math.abs(i) * 4)
         arc_led(n, led_pos, brightness)
     end
+end
+
+
+local arc_draw_modes = {
+    [EDIT_MODE.scan] = function(n)
+        if n == 1 then
+            draw_gradient_leds(n, c[n].value)
+        end
+    end,
+    [EDIT_MODE.single] = function(n)
+        draw_range_leds(n, c[n].min, c[n].max, (c[n].value / 127) * 64)
+    end,
+    [EDIT_MODE.set_min] = function(n)
+        draw_range_leds(n, c[n].min, c[n].max, (c[n].min / 127) * 64)
+    end,
+    [EDIT_MODE.set_max] = function(n)
+        draw_range_leds(n, c[n].min, c[n].max, (c[n].max / 127) * 64)
+    end,
+}
+
+-- Redraw helpers
+function arc_redraw(n)
+    arc_led_all(n, 0)
+    local draw_fn = arc_draw_modes[edit_mode]
+    if draw_fn then
+        draw_fn(n)
+    end
     arc_refresh()
 end
 
-function arc_key(z)
-    -- Implementation has been added to arc_redraw(n)
+function redraw_all_arcs()
+    for i = 1, 4 do
+        arc_redraw(i)
+    end
 end
 
-for i = 1, 1 do
-    arc_res(i, arc_sensitivity)
-end
-
-metro.new(function()
-    local now = get_time()
-    for n = 1, 1 do
-        if speed[n] ~= 0 then
-            values[n] = (values[n] + speed[n]) % 128
-            local config = cc_map[n]
-            local pan_vals = get_quad_panning_values(values[n])
-            for i = 1, #config do
-                midi_cc(config[i].cc, pan_vals[i], config[i].ch)
-            end
+function redraw_arc_scan()
+    for n = 1, 4 do
+        if c[n].speed ~= 0 then
+            c[n].value = (c[n].value + c[n].speed) % 128
+            local pan_vals = get_quad_panning_values(c[n].value)
+            send_quad_midi(pan_vals)
             arc_redraw(n)
         end
-
-        local pat = patterns[n]
-        if pat.recording then
-            local last_step = pat.data[#pat.data]
-            if not last_step or math.abs(values[n] - last_step.value) > 2 or now - pat.start_time - last_step.time > 100 then
-                table.insert(pat.data, {
-                    value = values[n],
-                    time = now - pat.start_time
-                })
-            end
-        end
     end
+end
+
+-- Update loop
+
+local mode_update_handlers = {
+    [EDIT_MODE.scan] = redraw_arc_scan,
+    [EDIT_MODE.single] = redraw_all_arcs,
+    [EDIT_MODE.set_min] = redraw_all_arcs,
+    [EDIT_MODE.set_max] = redraw_all_arcs
+}
+
+metro.new(function()
+    local handler = mode_update_handlers[edit_mode]
+    if handler then handler() end
 end, 33)
