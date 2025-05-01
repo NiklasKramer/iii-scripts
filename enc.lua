@@ -52,10 +52,9 @@ local pattern_touched = {
 local patterns = {}
 
 
-local function record_step(pat, value)
+local function record_step(pat, value, limit, now)
     if not pat or not pat.data or not pat.start_time then return end
-    local now = get_time()
-    if #pat.data < pattern_step_limit then
+    if #pat.data < limit then
         table.insert(pat.data, {
             value = value,
             time = now - pat.start_time
@@ -65,13 +64,12 @@ local function record_step(pat, value)
         pat.playing = true
         pat.play_start_time = get_time()
         pat.index = 1
-        print("AUTO STOPPED RECORDING at " .. pattern_step_limit .. " steps")
+        print("AUTO STOPPED RECORDING at " .. limit .. " steps")
     end
 end
 
-local function play_pattern_step(pat, n, values, cc_map)
+local function play_step(pat, n, values, cc_map, now)
     if not pat or not pat.data or not pat.play_start_time or not pat.index or not values[screen_index] then return end
-    local now = get_time()
     while true do
         local step = pat.data[pat.index]
         if not step or type(step) ~= "table" then break end
@@ -249,12 +247,12 @@ metro.new(function()
 
             -- playback logic
             if pat.playing and pat.play_start_time then
-                play_pattern_step(pat, n, values, cc_map)
+                play_step(pat, n, values, cc_map, get_time())
             end
 
             -- recording logic: unconditionally record while pattern is active
             if pat.recording then
-                record_step(pat, values[screen_index][n])
+                record_step(pat, values[screen_index][n], pattern_step_limit, get_time())
             end
         end
     end

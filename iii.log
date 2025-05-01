@@ -1,31 +1,3 @@
-2025-04-21 14:14:02,939 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
-2025-04-21 14:14:13,468 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='enc.lua' mode='r' encoding='UTF-8'>
-2025-04-21 14:49:54,971 diii.iii        ERROR   MainProcess lost connection: read failed: [Errno 6] Device not configured
-2025-04-21 14:49:57,612 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
-2025-04-21 15:04:38,796 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='enc.lua' mode='r' encoding='UTF-8'>
-2025-04-21 15:04:42,688 diii.iii        ERROR   MainProcess lost connection: read failed: [Errno 6] Device not configured
-2025-04-21 15:04:45,225 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
-2025-04-21 15:04:46,490 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='enc.lua' mode='r' encoding='UTF-8'>
-2025-04-21 15:07:05,663 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='enc.lua' mode='r' encoding='UTF-8'>
-2025-04-21 15:07:08,226 diii.iii        ERROR   MainProcess lost connection: read failed: [Errno 6] Device not configured
-2025-04-21 15:07:11,942 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
-2025-04-21 15:09:45,184 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='enc.lua' mode='r' encoding='UTF-8'>
-2025-04-21 15:09:47,317 diii.iii        ERROR   MainProcess lost connection: read failed: [Errno 6] Device not configured
-2025-04-21 15:09:52,050 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
-2025-04-21 15:09:52,679 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='enc.lua' mode='r' encoding='UTF-8'>
-2025-04-21 15:14:03,775 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='enc.lua' mode='r' encoding='UTF-8'>
-2025-04-21 15:14:08,703 diii.iii        ERROR   MainProcess lost connection: read failed: [Errno 6] Device not configured
-2025-04-21 15:14:11,239 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
-2025-04-21 15:14:11,979 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='enc.lua' mode='r' encoding='UTF-8'>
-2025-04-21 15:16:09,478 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='enc.lua' mode='r' encoding='UTF-8'>
-2025-04-21 15:16:53,497 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='enc.lua' mode='r' encoding='UTF-8'>
-2025-04-21 15:18:43,505 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='enc.lua' mode='r' encoding='UTF-8'>
-2025-04-21 15:21:13,458 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='enc.lua' mode='r' encoding='UTF-8'>
-2025-04-21 15:22:13,218 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='enc.lua' mode='r' encoding='UTF-8'>
-2025-04-21 15:39:53,907 diii.iii        ERROR   MainProcess lost connection: read failed: [Errno 6] Device not configured
-2025-04-21 15:39:57,388 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
-2025-04-21 15:40:16,184 diii.iii        ERROR   MainProcess lost connection: read failed: [Errno 6] Device not configured
-2025-04-21 15:40:18,296 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
-2025-04-21 15:41:13,220 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='enc.lua' mode='r' encoding='UTF-8'>
-2025-04-21 15:41:38,622 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='enc.lua' mode='r' encoding='UTF-8'>
-2025-04-21 15:41:52,872 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='enc.lua' mode='r' encoding='UTF-8'>
+2025-05-01 11:10:29,947 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
+2025-05-01 11:10:36,649 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='scanner.lua' mode='r' encoding='UTF-8'>
+2025-05-01 11:11:14,918 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='scanner.lua' mode='r' encoding='UTF-8'>
