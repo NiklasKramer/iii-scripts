@@ -5,6 +5,10 @@
 
 local arc_sensitivity = 2
 
+local scan_lfo_depth = 0
+local scan_lfo_speed = 0.01
+local lfo_phase = 0
+
 local EDIT_MODE = {
     scan = 0,
     single = 1,
@@ -20,7 +24,7 @@ local manual_toggle_direction = 0
 
 local c = {}
 for i = 1, 4 do
-    c[i] = { cc = 7, ch = i, min = 0, max = 127, value = 64, speed = 0 }
+    c[i] = { cc = 107, ch = i, min = 0, max = 127, value = 64, speed = 0 }
 end
 
 for i = 1, 4 do
@@ -96,6 +100,10 @@ local function handle_scan_mode(n, d)
         else
             c[1].speed = clamp(c[1].speed + d * 0.1, -20, 20)
         end
+    elseif n == 2 then
+        scan_lfo_depth = clamp(scan_lfo_depth + d * 0.001, 0, 1)
+    elseif n == 3 then
+        scan_lfo_speed = clamp(scan_lfo_speed + d * 0.001, -0.2, 0.2)
     elseif n == 4 then
         local dir = d > 0 and 1 or -1
 
@@ -172,6 +180,30 @@ end
 local function draw_scan_mode(n)
     if n == 1 then
         draw_gradient_leds(n, c[n].value)
+    elseif n == 2 then
+        local center = 32
+        local pulse = (math.sin(lfo_phase * 2) + 1) / 2 -- range 0..1
+        for i = -20, 20 do
+            local pos = (center + i) % 64
+            local falloff = (1 - math.abs(i) / 20) ^ 2
+            local brightness = math.floor(scan_lfo_depth * 15 * pulse * falloff)
+            if brightness > 0 then
+                arc_led(n, pos + 1, brightness)
+            end
+        end
+        local edge_brightness = math.floor(scan_lfo_depth * 15)
+        arc_led(n, (32 - 20) % 64 + 1, edge_brightness)
+        arc_led(n, (32 + 20) % 64 + 1, edge_brightness)
+    elseif n == 3 then
+        local steps = 64
+        local normalized_phase = (scan_lfo_speed >= 0) and lfo_phase or (2 * math.pi - lfo_phase)
+        local pos = math.floor((normalized_phase / (2 * math.pi)) * steps) % steps
+        local width = math.floor(scan_lfo_speed * 150)
+        for i = -1, 1 do
+            local p = (pos + i) % 64
+            local brightness = math.max(1, 10 - math.abs(i) * 2)
+            arc_led(n, p + 1, brightness)
+        end
     elseif n == 4 then
         local left_start = 20
         local right_start = 44
@@ -180,6 +212,7 @@ local function draw_scan_mode(n)
             local right_pos = (right_start + i) % 64
             arc_led(n, left_pos + 1, manual_scan and 10 or 2)
             arc_led(n, right_pos + 1, manual_scan and 2 or 10)
+            arc_refresh()
         end
     end
 end
@@ -214,18 +247,24 @@ function redraw_all_arcs()
 end
 
 function redraw_arc_scan()
+    lfo_phase = (lfo_phase + scan_lfo_speed) % (2 * math.pi)
     if not manual_scan then
         for n = 1, 4 do
-            if c[n].speed ~= 0 then
-                c[n].value = (c[n].value + c[n].speed) % 128
-                local pan_vals = get_quad_panning_values(c[n].value)
-                send_quad_midi(pan_vals)
+            local should_redraw = c[n].speed ~= 0 or n == 2 or n == 3
+            if should_redraw then
+                if c[n].speed ~= 0 then
+                    local lfo = math.sin(lfo_phase) * 64 * (scan_lfo_depth ^ 2)
+                    c[n].value = (c[n].value + c[n].speed + lfo) % 128
+                    local pan_vals = get_quad_panning_values(c[n].value)
+                    send_quad_midi(pan_vals)
+                end
                 arc_redraw(n)
             end
         end
     else
-        arc_redraw(1)
-        arc_redraw(4)
+        for _, n in ipairs({ 1, 2, 3, 4 }) do
+            arc_redraw(n)
+        end
     end
 end
 
@@ -238,7 +277,10 @@ local mode_update_handlers = {
     [EDIT_MODE.set_max] = redraw_all_arcs
 }
 
+
 metro.new(function()
     local handler = mode_update_handlers[edit_mode]
     if handler then handler() end
 end, 33)
+
+redraw_all_arcs()
