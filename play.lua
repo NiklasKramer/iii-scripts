@@ -707,8 +707,7 @@ end
 
 --
 --
--- // METRO CALLBACK \\
-function metro(index, stage)
+function metro_event(index, stage)
     if index == 2 then
         global_time = global_time + 0.01
 
@@ -725,14 +724,9 @@ function metro(index, stage)
 
                     handle_note_generation(event.x, event.y, event.z, event.channel)
 
-                    if current_screen == screen_mode.play and not current_screen == screen_mode.pattern_edit then
-                        if event.channel == midichannel then
-                            -- Full brightness for the current channel
-                            grid_led(event.x, event.y, event.z * 15)
-                        else
-                            -- Dim brightness for other channels
-                            grid_led(event.x, event.y, event.z * 1)
-                        end
+                    if current_screen == screen_mode.play then
+                        local level = (event.channel == midichannel) and (event.z * 15) or (event.z * 5)
+                        grid_led(event.x, event.y, level)
                     end
 
 
@@ -754,13 +748,14 @@ function metro(index, stage)
     end
 end
 
+global_metro = nil
 function start_global_timer()
-    metro_set(2, 10, -1)
+    global_metro = metro.new(metro_event, 10, -1)
     print("Global timer started")
 end
 
 function stop_global_timer()
-    metro_set(2, 0)
+    metro.stop(global_metro)
     print("Global timer stopped")
 end
 

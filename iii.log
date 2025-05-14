@@ -1,3 +1,26 @@
-2025-05-01 11:10:29,947 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
-2025-05-01 11:10:36,649 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='scanner.lua' mode='r' encoding='UTF-8'>
-2025-05-01 11:11:14,918 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='scanner.lua' mode='r' encoding='UTF-8'>
+2025-05-14 21:39:46,880 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
+2025-05-14 21:40:12,572 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 21:43:09,916 diii.iii        ERROR   MainProcess lost connection: read failed: [Errno 6] Device not configured
+2025-05-14 21:43:45,122 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
+2025-05-14 21:43:46,820 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 21:45:58,943 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 21:46:07,887 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 21:46:19,115 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 21:46:41,054 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 21:47:08,693 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 21:48:54,013 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 21:51:45,321 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 21:52:13,612 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 21:54:22,868 diii.iii        ERROR   MainProcess lost connection: read failed: [Errno 6] Device not configured
+2025-05-14 21:54:27,690 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
+2025-05-14 22:01:38,398 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 22:02:58,361 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 22:04:10,885 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 22:11:54,568 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 22:13:25,535 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 22:14:10,129 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 22:44:03,760 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 22:45:14,640 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 22:49:37,111 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 22:49:59,980 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 22:51:26,726 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>

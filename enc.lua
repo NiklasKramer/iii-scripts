@@ -68,14 +68,14 @@ local function record_step(pat, value, limit, now)
     end
 end
 
-local function play_step(pat, n, values, cc_map, now)
-    if not pat or not pat.data or not pat.play_start_time or not pat.index or not values[screen_index] then return end
+local function play_step(pat, n, values, cc_map, now, s)
+    if not pat or not pat.data or not pat.play_start_time or not pat.index or not values[s] then return end
     while true do
         local step = pat.data[pat.index]
         if not step or type(step) ~= "table" then break end
         if now - pat.play_start_time >= step.time then
-            values[screen_index][n] = step.value
-            local config = cc_map[screen_index][n]
+            values[s][n] = step.value
+            local config = cc_map[s][n]
             midi_cc(config.cc, step.value, config.ch)
             pat.index = pat.index + 1
             if pat.index > #pat.data then
@@ -241,18 +241,20 @@ metro.new(function()
 end, 33)
 
 metro.new(function()
-    for n = 1, 4 do
-        if patterns[screen_index] and patterns[screen_index][n] and values[screen_index] then
-            local pat = patterns[screen_index][n]
+    for s = 1, 4 do
+        for n = 1, 4 do
+            if patterns[s] and patterns[s][n] and values[s] then
+                local pat = patterns[s][n]
 
-            -- playback logic
-            if pat.playing and pat.play_start_time then
-                play_step(pat, n, values, cc_map, get_time())
-            end
+                -- playback logic
+                if pat.playing and pat.play_start_time then
+                    play_step(pat, n, values, cc_map, get_time(), s)
+                end
 
-            -- recording logic: unconditionally record while pattern is active
-            if pat.recording then
-                record_step(pat, values[screen_index][n], pattern_step_limit, get_time())
+                -- recording logic: unconditionally record while pattern is active
+                if pat.recording then
+                    record_step(pat, values[s][n], pattern_step_limit, get_time())
+                end
             end
         end
     end
