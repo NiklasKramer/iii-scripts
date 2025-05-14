@@ -24,3 +24,19 @@
 2025-05-14 22:49:37,111 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
 2025-05-14 22:49:59,980 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
 2025-05-14 22:51:26,726 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 22:55:06,211 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 22:57:12,910 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 22:58:35,173 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 23:00:53,793 diii.iii        ERROR   MainProcess lost connection: read failed: [Errno 6] Device not configured
+2025-05-14 23:00:57,569 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
+2025-05-14 23:01:24,429 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 23:03:25,481 diii.iii        ERROR   MainProcess lost connection: read failed: [Errno 6] Device not configured
+2025-05-14 23:03:28,938 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
+2025-05-14 23:03:47,414 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 23:03:59,563 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 23:05:17,186 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 23:06:15,525 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='rotations.lua' mode='r' encoding='UTF-8'>
+2025-05-14 23:07:07,744 diii.iii        ERROR   MainProcess lost connection: read failed: [Errno 6] Device not configured
+2025-05-14 23:07:11,007 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
+2025-05-14 23:07:20,836 diii.iii        ERROR   MainProcess lost connection: read failed: [Errno 6] Device not configured
+2025-05-14 23:07:21,179 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
