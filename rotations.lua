@@ -56,9 +56,11 @@ end
 local function draw_arc_notes(n)
     if screen_index == 1 then
         for m = 1, #note[n] do
-            if note[n][m] ~= nil then
+            local pitch = note[n][m]
+            if pitch ~= nil then
                 local led_pos = math.floor((m - 1) * 64 / #note[n]) + 1
-                arc_led(n, led_pos, 1)
+                local brightness = clamp(math.floor((pitch / 47) * 14) + 1, 1, 15)
+                arc_led(n, led_pos, brightness)
             end
         end
         if note[n][seq[n]] ~= nil then
@@ -122,14 +124,7 @@ function arc(n, d)
     if screen_index == 1 then
         if key1_held then
             if d > 0 then
-                local ranges = {
-                    { 1,  11 },
-                    { 12, 23 },
-                    { 24, 35 },
-                    { 36, 47 },
-                }
-                local r = ranges[n]
-                local new_note = math.random(r[1], r[2])
+                local new_note = math.random(12, 23)
                 local insert_pos = math.random(1, #note[n] + 1)
                 table.insert(note[n], insert_pos, new_note)
                 if not note[n]._added then note[n]._added = {} end
@@ -164,7 +159,7 @@ function arc_key(z)
         for n = 1, 4 do
             if now - tap_times[n] < 250 then
                 print("here")
-                running[n] = not running[n]
+                sp[n] = 0
                 tap_times[n] = 0
                 return
             else
