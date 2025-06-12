@@ -4,13 +4,55 @@ key_long = false
 
 -- four voices, each with a melody sequence
 note = {}
-note[1] = { 45, 43, 50 }
-note[2] = { 55, 64 }
-note[3] = { 69, 74, 76, 79 }
-note[4] = { 86, 83, 81, 72, 79 }
+
+-- Sequence 1: A minor pentatonic scale expanding upwards
+note[1] = {}
+do
+    local scale = { 45, 48, 50, 52, 55 }
+    for i = 0, 15 do
+        table.insert(note[1], scale[(i % #scale) + 1] + 12 * math.floor(i / #scale))
+    end
+end
+
+-- Sequence 2: Rolling triads in C major
+note[2] = {}
+do
+    local triads = {
+        { 48, 52, 55 }, -- C
+        { 50, 53, 57 }, -- Dm
+        { 52, 55, 59 }, -- Em
+        { 53, 57, 60 }, -- F
+        { 55, 59, 62 }, -- G
+        { 57, 60, 64 }, -- Am
+    }
+    for i = 1, 16 do
+        local chord = triads[(math.floor(i / 4) % #triads) + 1]
+        table.insert(note[2], chord[(i % 3) + 1])
+    end
+end
+
+-- Sequence 3: Ascending A major scale
+note[3] = {}
+do
+    local scale = { 69, 71, 72, 74, 76, 77, 79, 81 }
+    for i = 0, 15 do
+        table.insert(note[3], scale[(i % #scale) + 1])
+    end
+end
+
+-- Sequence 4: Repeating E minor arpeggios
+note[4] = {}
+do
+    local arp = { 52, 55, 59, 64 }
+    for i = 0, 15 do
+        table.insert(note[4], arp[(i % #arp) + 1] + 12 * math.floor(i / 16))
+    end
+end
 
 seq = { 1, 1, 1, 1 }
 pos = { 0, 0, 0, 0 }
+window_start = { 1, 1, 1, 1 }
+window_length = { 3, 3, 3, 3 }
 sp = { 0, 0, 0, 0 }
 
 local root_note = 60
@@ -78,7 +120,9 @@ function step_voices()
 
         if pos[n] < 0 or pos[n] > 1023 then
             midi_note_off(note[n][seq[n]], 127, ch)
-            seq[n] = (seq[n] % #note[n]) + 1
+            local start = window_start[n]
+            local len = window_length[n]
+            seq[n] = ((seq[n] - start + (sp[n] > 0 and 1 or -1)) % len + len) % len + start
             local mel = note[n][seq[n]]
             local tnt = generate_tintinnabuli(mel, n)
             local mel_vel = base_melody_velocity + math.random(-melody_velocity_range, melody_velocity_range)
@@ -95,8 +139,16 @@ function arc_redraw()
         clear_arc()
         for n = 1, 4 do
             arc_led_all(n, 0)
-            for m = 1, #note[n] do arc_led(n, 32 + m * 2, 1) end
-            arc_led_rel(n, 32 + seq[n] * 2, 9)
+            local s = window_start[n]
+            local l = window_length[n]
+            for i = 0, l - 1 do
+                local step_index = s + i
+                if step_index == seq[n] then
+                    arc_led(n, 32 + step_index * 2, 9)
+                else
+                    arc_led(n, 32 + step_index * 2, 1)
+                end
+            end
             point(n, pos[n])
         end
         arc_refresh()
@@ -109,15 +161,46 @@ function arc_redraw()
                     arc_led(n, 10 + i * 4, (i == active_mode and active_mode > 0) and 15 or 2)
                 end
 
-                -- Special indicator for mode 0 (off)
                 local center = 40
                 for offset = -2, 2 do
                     arc_led(n, center + offset, active_mode == 0 and 2 or 10)
                 end
             end
             arc_refresh()
-        else
-            clear_arc()
+        elseif edit_mode == 2 then
+            for n = 1, 4 do
+                arc_led_all(n, 0)
+                local s = window_start[n]
+                local l = window_length[n]
+                for i = 1, #note[n] do
+                    local pos = 10 + ((i - 1) % 64)
+                    if i == s then
+                        arc_led(n, pos, 15)
+                    elseif i > s and i < s + l then
+                        arc_led(n, pos, 5)
+                    else
+                        arc_led(n, pos, 1)
+                    end
+                end
+            end
+            arc_refresh()
+        elseif edit_mode == 3 then
+            for n = 1, 4 do
+                arc_led_all(n, 0)
+                local s = window_start[n]
+                local l = window_length[n]
+                -- Show all steps dimly
+                for i = 1, #note[n] do
+                    arc_led(n, 10 + ((i - 1) % 64), 1)
+                end
+                -- Highlight current window
+                for i = 0, l - 1 do
+                    local step = (s + i - 1) % 64
+                    local level = (i == l - 1) and 12 or 5
+                    arc_led(n, 10 + step, level)
+                end
+            end
+            arc_refresh()
         end
     end
 end
@@ -137,6 +220,12 @@ function arc(n, d)
     elseif mode == 2 and edit_mode == 1 then
         tintin_mode[n] = clamp(tintin_mode[n] + d, 0, 5)
         print(string.format("encoder %d tintin_mode = %d", n, tintin_mode[n]))
+    elseif mode == 2 and edit_mode == 2 then
+        window_start[n] = clamp(window_start[n] + d, 1, math.max(1, #note[n] - window_length[n] + 1))
+        print(string.format("encoder %d window_start = %d", n, window_start[n]))
+    elseif mode == 2 and edit_mode == 3 then
+        window_length[n] = clamp(window_length[n] + d, 1, #note[n] - window_start[n] + 1)
+        print(string.format("encoder %d window_length = %d", n, window_length[n]))
     end
 end
 

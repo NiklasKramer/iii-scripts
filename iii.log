@@ -1,88 +1,16 @@
-2025-05-17 10:16:28,735 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
-2025-05-17 10:26:59,331 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 10:28:22,701 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 10:32:10,921 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 10:36:20,782 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 10:38:10,555 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 10:39:47,139 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 10:43:42,092 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 10:44:37,883 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 10:45:04,348 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 10:45:58,262 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 10:46:22,911 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 10:49:57,475 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 10:50:32,157 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 10:52:25,034 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 10:52:49,203 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 10:52:58,848 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 10:53:06,793 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 10:53:29,688 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 10:54:03,458 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:00:45,185 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:01:08,481 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:01:58,959 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:03:12,631 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:03:26,577 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:04:30,176 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:05:46,293 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:06:10,566 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:07:15,527 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:08:05,452 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:17:04,697 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:23:03,334 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:23:51,387 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:26:03,644 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:28:16,310 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:28:48,059 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:28:56,361 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:29:07,511 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:31:19,198 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:31:51,997 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:33:24,343 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:34:20,840 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 11:46:58,162 diii.iii        ERROR   MainProcess lost connection: read failed: [Errno 6] Device not configured
-2025-05-17 14:30:24,419 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
-2025-05-17 14:52:16,969 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 14:52:31,331 diii.iii        ERROR   MainProcess lost connection: read failed: [Errno 6] Device not configured
-2025-05-17 14:52:33,364 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
-2025-05-17 14:52:46,151 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 14:53:42,738 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 14:54:31,980 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 14:54:52,430 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 14:57:51,849 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 14:58:42,498 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 14:59:56,442 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:00:34,327 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:01:31,755 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:01:42,435 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:08:39,516 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:09:15,909 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:15:32,331 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:19:51,812 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:21:36,360 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:23:31,054 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:24:42,685 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:27:36,517 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:30:57,198 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:32:13,661 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:32:51,983 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:33:27,904 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:33:46,421 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:34:39,886 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:35:14,493 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:38:05,130 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:39:44,254 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:40:57,705 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:42:05,234 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:44:22,344 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:45:46,640 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:47:17,529 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:49:42,957 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:52:16,516 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:53:23,792 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:54:44,714 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:56:40,213 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 15:57:30,457 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 19:20:58,130 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 19:21:20,503 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
-2025-05-17 19:21:45,726 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
+2025-05-28 16:52:42,748 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
+2025-05-28 16:52:46,865 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
+2025-05-28 17:02:49,455 diii.iii        ERROR   MainProcess lost connection: read failed: [Errno 6] Device not configured
+2025-05-28 21:18:09,757 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
+2025-05-28 21:21:00,073 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
+2025-05-28 21:22:03,932 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
+2025-05-28 21:24:10,383 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
+2025-05-28 21:25:54,632 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
+2025-05-28 21:26:44,316 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
+2025-05-28 21:28:15,894 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
+2025-05-28 21:30:20,942 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
+2025-05-28 21:30:41,200 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
+2025-05-28 21:32:49,684 diii.iii        ERROR   MainProcess lost connection: read failed: [Errno 6] Device not configured
+2025-05-28 21:32:52,320 diii.iii        INFO    MainProcess connected to device on /dev/cu.usbmodem693779901
+2025-05-28 21:35:22,710 diii.iii        INFO    MainProcess opened file: <_io.TextIOWrapper name='tintin.lua' mode='r' encoding='UTF-8'>
+2025-05-28 22:10:37,675 diii.iii        ERROR   MainProcess lost connection: read failed: [Errno 6] Device not configured
